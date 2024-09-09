@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+
 
 
 public class Player_Turn : MonoBehaviour
@@ -11,8 +13,10 @@ public class Player_Turn : MonoBehaviour
     public bool isEngageMove;
     public bool isRecoilMove;
 
+
     [Header("=== Attack Setting ===")]
-    [SerializeField] private List<Attack_Slot> attackSlot;
+    [SerializeField] private List<Attack_Base> attackSlot;
+    [SerializeField] private int attackCount;
 
 
     [Header("=== Component ===")]
@@ -21,12 +25,12 @@ public class Player_Turn : MonoBehaviour
 
 
     // 맨 처음 전투 시작할 때 호출 -> 등장 모션 같은거
-    public void Turn_Start()
+    public void Turn_StartAnim()
     {
-        curCoroutine = StartCoroutine(Turn_StartCall());
+        curCoroutine = StartCoroutine(StartAnimCall());
     }
 
-    private IEnumerator Turn_StartCall()
+    private IEnumerator StartAnimCall()
     {
         isSpawnAnim = true;
 
@@ -53,20 +57,25 @@ public class Player_Turn : MonoBehaviour
     public void Turn_Select()
     {
         isSelect = true;
+        Player_UI.instance.TurnFight_Select(false);
+
     }
 
     // 공격 선택 체크
     public void Select_Check()
     {
-        for (int i = 0; i < attackSlot.Count; i++)
+        for (int i = 0; i < attackCount; i++)
         {
-            if (!attackSlot[i].haveAttack)
-            {
-                return;
-            }
+
         }
 
         isSelect = false;
+    }
+
+    // 합 이동
+    public void Turn_EngageMove()
+    {
+
     }
 
     // 맨 마지막 전투 종료 할 때 호출 -> 승리/사망 모션 같은거

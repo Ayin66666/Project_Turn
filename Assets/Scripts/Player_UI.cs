@@ -44,6 +44,10 @@ public class Player_UI : MonoBehaviour
     [SerializeField] private Material bossText_Material;
 
 
+    [Header("=== Select UI ===")]
+    [SerializeField] private GameObject selectSet;
+
+
     // 변경 사항
     // 싱글톤으로 변경함
     // UI 작업은 World UI만
@@ -67,7 +71,7 @@ public class Player_UI : MonoBehaviour
         // Fade 테스트용
         if (Input.GetKeyDown(KeyCode.V))
         {
-            Fade();
+            TurnFight_Fade();
         }
     }
 
@@ -86,12 +90,18 @@ public class Player_UI : MonoBehaviour
 
     // 턴 UI는 내가 추가로 배치하고 작업하겠읍니다
     #region Turn UI
+
+    public void TurnFight_Select(bool isOn)
+    {
+        selectSet.SetActive(isOn);
+    }
+
     public void Attack_Point()
     {
 
     }
 
-    public void Fade()
+    public void TurnFight_Fade()
     {
         if(isFade)
         {
