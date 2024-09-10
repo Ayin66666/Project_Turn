@@ -25,14 +25,14 @@ public class Player_Manager : MonoBehaviour
 
     [Header("=== State ===")]
     public State state;
-    [SerializeField] private int curTurn;
     public bool isAttack;
     public bool canMove;
     public bool isDie;
 
 
     [Header("=== Status ===")]
-    [SerializeField] private int hp;
+    public int maxHp;
+    public int curHp;
     [SerializeField] private int physicalDefense;
     [SerializeField] private int magicalDefense;
 
@@ -43,19 +43,10 @@ public class Player_Manager : MonoBehaviour
     [SerializeField] private int criticalMultiplier;
 
     [SerializeField] private int attackPoint;
-
+    [SerializeField] private Vector2Int slotSpeed;
+  
+    
     #region Property
-    public int Turn
-    {
-        get { return Turn; }
-        private set { Turn = value; }
-    }
-
-    public int Hp
-    {
-        get { return hp; }
-        private set {  hp = value; }
-    }
     public int PhysicalDefense
     {
         get { return physicalDefense; }
@@ -77,6 +68,17 @@ public class Player_Manager : MonoBehaviour
         get { return criticalMultiplier; }
         private set { criticalMultiplier = value; }
     }
+    public int AttackPoint
+    {
+        get{ return attackPoint; }
+        private set { attackPoint = value; }
+    }
+    public Vector2Int SlotSpeed
+    {
+        get { return slotSpeed; }
+        private set { slotSpeed = value; }
+    }
+
     #endregion
 
 
@@ -91,7 +93,6 @@ public class Player_Manager : MonoBehaviour
             instnace = this;
         }
     }
-
 
     public void Type_Setting(State state)
     {

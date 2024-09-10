@@ -10,8 +10,8 @@ public class TurnFight_Manager : MonoBehaviour
 
 
     [Header("=== Pos ===")]
-    [SerializeField] private Transform[] enemyPos;
-    [SerializeField] private Transform playerPos;
+    [SerializeField] private Transform enemyEngagePos;
+    [SerializeField] private Transform playerEngagePos;
 
 
     [Header("=== Enemy ===")]
@@ -56,7 +56,7 @@ public class TurnFight_Manager : MonoBehaviour
 
 
         // 2. 전투 필드로 플레이어 & 몬스터 이동
-        Player_Manager.instnace.player_Turn.gameObject.transform.position = playerPos.position;
+        Player_Manager.instnace.player_Turn.gameObject.transform.position = playerEngagePos.position;
         for (int i = 0; i < enemys.Count; i++)
         {
             enemys[i].gameObject.SetActive(true);
@@ -97,14 +97,11 @@ public class TurnFight_Manager : MonoBehaviour
         curTurn = Turn.Fight;
         yield return null;
 
+
         // 5. 선택 UI 종료
         Player_UI.instance.TurnFight_Select(false);
+        
 
-        // 6. 플레이어 - 몬스터 이동
-        Player_Manager.instnace.player_Turn.Turn_EngageMove();
-
-
-        // 7. 플레이어 - 몬스터 합
 
 
         // 8. 플레이어 - 몬스터 원위치
