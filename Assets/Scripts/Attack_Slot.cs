@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+
 
 public class Attack_Slot : MonoBehaviour
 {
@@ -12,7 +14,13 @@ public class Attack_Slot : MonoBehaviour
     public int slotSpeed;
     public int curAttackCount;
     public enum SlotType { Player, Enemy }
-    
+
+
+    [Header("=== Slot UI ===")]
+    [SerializeField] private Image iconImage;
+    [SerializeField] private Text speedText;
+
+
     public int DamageCal(int count)
     {
         // 여기에 버프에 따른 데미지 증감 구현 필요함!

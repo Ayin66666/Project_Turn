@@ -29,7 +29,7 @@ public class Player_UI : MonoBehaviour
     // 전투 자원
     [Header("=== Attack Point UI ===")]
     [SerializeField] private GameObject attackPointSet;
-    [SerializeField] private Image[] pointImage;
+    [SerializeField] private GameObject[] pointImage;
 
 
     // 월드 <-> 턴제 이동 Fade
@@ -46,6 +46,10 @@ public class Player_UI : MonoBehaviour
 
     [Header("=== Select UI ===")]
     [SerializeField] private GameObject selectSet;
+
+
+    [Header("=== Engage UI ===")]
+    [SerializeField] private GameObject engageUISet;
 
 
     // 변경 사항
@@ -88,19 +92,51 @@ public class Player_UI : MonoBehaviour
     }
     #endregion
 
+
     // 턴 UI는 내가 추가로 배치하고 작업하겠읍니다
     #region Turn UI
 
+    // 플레이어 턴 UI On / Off
     public void TurnFight_Select(bool isOn)
     {
         selectSet.SetActive(isOn);
     }
 
+    // 전투 자원 UI
     public void Attack_Point()
     {
+        // Reset UI
+        for (int i = 0; i < pointImage.Length; i++)
+        {
+            pointImage[i].SetActive(false);
+        }
 
+        // UI On
+        for (int i = 0; i < Player_Manager.instnace.AttackPoint; i++)
+        {
+            pointImage[i].SetActive(true);
+        }
     }
 
+    // 플레이어 VS 애너미 공격 비교 UI
+    public void EngageUI(Attack_Slot slot, bool isOn)
+    {
+        // 슬롯에서 데이터를 받아와서 동작
+        // 플레이어 & 몬스터 공격 데이터를 받아와서 사용
+        // 데이터는 플레이어의 공격 슬롯에 myAttack 과 target 에 있음!
+        // 데이터를 받은 뒤, 각각 비교 UI에 삽입
+
+        if (isOn)
+        {
+            engageUISet.SetActive(true);
+        }
+        else
+        {
+            engageUISet.SetActive(false);
+        }
+    }
+
+    // 전투 시작 페이드
     public void TurnFight_Fade()
     {
         if(isFade)

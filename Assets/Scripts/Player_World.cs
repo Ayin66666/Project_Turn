@@ -17,22 +17,21 @@ public class Player_World : MonoBehaviour
 
     [Header("=== Move Setting ===")]
     [SerializeField] private LayerMask groundLayer;
-    [SerializeField] private bool canJump;
     [SerializeField] private bool canDash;
+    [SerializeField] private bool canJump;
     private float yDir;
     private Vector3 moveDir;
 
 
     [Header("=== Component ===")]
-    [SerializeField] private Collider bodyCollider;
-    [SerializeField] private Rigidbody rigid;
+    [SerializeField] private CharacterController controller;
     [SerializeField] private TrailRenderer trail;
 
 
     private void OnEnable()
     {
         canDash = true;
-        canDash = true;
+        canJump = true;
     }
 
     private void Update()
@@ -55,7 +54,7 @@ public class Player_World : MonoBehaviour
         moveDir = new Vector3(x, 0, z);
 
         // Movement
-        rigid.velocity = new Vector3(moveDir.x, yDir, moveDir.z);
+        controller.Move(new Vector3(moveDir.x, yDir, moveDir.z));
     }
 
     private void Jump()
