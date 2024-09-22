@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19cfc6f20ba3a0042bf61c12e745ab88, type: 3}
+  m_Name: Enemy_Normal
+  m_EditorClassIdentifier: 
+  enemy_Name: "\uC774\uB984"
+  hp: 1000
+  physicalDefense: 10
+  magicalDefense: 10
+  physicalDamage: 30
+  magcialDamage: 30
+  criticalChance: 20
+  criticalMultiplier: 1.5

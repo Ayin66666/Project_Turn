@@ -14,14 +14,14 @@ public class Player_Manager : MonoBehaviour
     public Action buffAction;
 
     public enum State { World, Turn }
-    public enum HitType { None, Groggy }
-
+    public enum DamageType { phsical, magicl }
+    public enum HitEffect { None, Groggy }
 
     [Header("=== Component ===")]
     public Player_World player_World;
     public Player_Turn player_Turn;
     public Player_UI player_UI;
-
+    public TurnFight_Manager turnManger = null;
 
     [Header("=== State ===")]
     public State state;
@@ -94,28 +94,21 @@ public class Player_Manager : MonoBehaviour
         }
     }
 
-    public void Type_Setting(State state)
+    public void Take_Damage(int damage, DamageType type)
     {
-        this.state = state;
-        switch (state)
-        {
-            case State.World:
-                // Cam Setting
 
-                // Turn Body Off
-                buffAction = null;
+    }
 
-                // Start Animation
-                break;
+    public void Turn_Fight_Start(Transform movePos, TurnFight_Manager manager)
+    {
+        turnManger = manager;
+        player_Turn.gameObject.transform.position = movePos.position;
+        player_World.gameObject.SetActive(false);
+        player_Turn.gameObject.SetActive(true);
+    }
 
-            case State.Turn:
-                // Cam Setting
+    public void Turn_Fight_End()
+    {
 
-                // World Body Off
-                buffAction = null;
-
-                // Return Idle
-                break;
-        }
     }
 }

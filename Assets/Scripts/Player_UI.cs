@@ -11,19 +11,25 @@ public class Player_UI : MonoBehaviour
 
     [Header("=== UI State ===")]
     public bool isFade;
+
+    // 여기 두개 불값으로 옵션창 켜진거 확인 & 옵션창에서 나가기 버튼 누른건지 확인
     public bool isOptionOn;
+    public bool isExitOn;
 
 
     // (장비, 인벤, 스킬, 옵션) 창
     [Header("=== Option UI ===")]
     [SerializeField] private GameObject optionSet;
+    [SerializeField] private GameObject waponItemSet;
+    [SerializeField] private GameObject skillSet;
+    [SerializeField] private GameObject exitSet;
 
 
     // 체력바 F & B
     [Header("=== Hp UI ===")]
     [SerializeField] private GameObject hpSet;
-    [SerializeField] private Slider hpFSlider;
-    [SerializeField] private Slider hpBSlider;
+    [SerializeField] private Slider hpSlider;
+    [SerializeField] private Text hpText;
 
 
     // 전투 자원
@@ -32,7 +38,7 @@ public class Player_UI : MonoBehaviour
     [SerializeField] private GameObject[] pointImage;
 
 
-    // 월드 <-> 턴제 이동 Fade
+    // 월드 <-> 턴제 이동 Fade UI
     [Header("=== Fade UI ===")]
     [SerializeField] private GameObject fadeSet;
     [SerializeField] private Image fadeImage;
@@ -44,12 +50,31 @@ public class Player_UI : MonoBehaviour
     [SerializeField] private Material bossText_Material;
 
 
-    [Header("=== Select UI ===")]
-    [SerializeField] private GameObject selectSet;
+    // 턴 전투 UI
+    [Header("=== Turn Fight Select UI ===")]
+    [SerializeField] private GameObject selectListSet;
+    [SerializeField] private GameObject attackSlotSet;
+    [SerializeField] private Button turn_FightButton;
 
 
-    [Header("=== Engage UI ===")]
-    [SerializeField] private GameObject engageUISet;
+    // 합 UI
+    [Header("=== Turn Fight Exchange UI ===")]
+    // 일방 - 합 공격 표시 UI
+    [SerializeField] private GameObject exchangeSet;
+    [SerializeField] private Text exchangeText;
+
+    // 플레이어 합 UI
+    [SerializeField] private GameObject pExchangeUISet;
+    [SerializeField] private Image exchange_pIconImage;
+    [SerializeField] private Text exchange_pAttackNameText;
+    [SerializeField] private Text exchange_pdamageText;
+    [SerializeField] private Text exchange_pDescriptionText;
+    // 에너미 합 UI
+    [SerializeField] private GameObject eExchangeUISet;
+    [SerializeField] private Image exchange_eIconImage;
+    [SerializeField] private Text exchange_eAttackNameText;
+    [SerializeField] private Text exchange_edamageText;
+    [SerializeField] private Text exchange_eDescriptionText;
 
 
     // 변경 사항
@@ -97,13 +122,14 @@ public class Player_UI : MonoBehaviour
     #region Turn UI
 
     // 플레이어 턴 UI On / Off
-    public void TurnFight_Select(bool isOn)
+    public void Turn_FightSelect(bool isOn)
     {
-        selectSet.SetActive(isOn);
+        selectListSet.SetActive(isOn);
+        attackSlotSet.SetActive(isOn);
     }
 
     // 전투 자원 UI
-    public void Attack_Point()
+    public void Turn_AttackPoint()
     {
         // Reset UI
         for (int i = 0; i < pointImage.Length; i++)
@@ -118,22 +144,89 @@ public class Player_UI : MonoBehaviour
         }
     }
 
-    // 플레이어 VS 애너미 공격 비교 UI
-    public void EngageUI(Attack_Slot slot, bool isOn)
+    // 플레이어 VS 애너미 공격 비교 UI -> 여기 작업중 -> 동작 테스트 필요함!
+    public void Turn_EngageUI(Attack_Slot slot, bool isOn)
     {
         // 슬롯에서 데이터를 받아와서 동작
         // 플레이어 & 몬스터 공격 데이터를 받아와서 사용
         // 데이터는 플레이어의 공격 슬롯에 myAttack 과 target 에 있음!
         // 데이터를 받은 뒤, 각각 비교 UI에 삽입
 
-        if (isOn)
+        if(isOn)
         {
-            engageUISet.SetActive(true);
+            // 플레이어 & 합 여부 UI 셋팅
+            if (slot.myAttack != null)
+            {
+                // 합 여부 UI 셋팅
+                exchangeSet.SetActive(true);
+                switch (slot.attackType)
+                {
+                    case Attack_Slot.AttackType.Oneside_Attack:
+                        exchangeText.text = "일방 공격";
+                        break;
+
+                    case Attack_Slot.AttackType.Exchange_Attacks:
+                        exchangeText.text = "합 공격";
+                        break;
+                }
+
+                // 플레이어 UI 셋팅
+                pExchangeUISet.SetActive(true);
+                exchange_pIconImage.sprite = slot.myAttack.icon;
+                exchange_pAttackNameText.text = slot.myAttack.attackName;
+                exchange_pDescriptionText.text = slot.myAttack.attackName;
+                System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                for (int i = 0; i < slot.myAttack.damageValue.Length; i++)
+                {
+                    sb.Append($"{slot.myAttack.damageValue[i].x} ~ {slot.myAttack.damageValue[i].y}");
+                    if (i < slot.myAttack.damageValue.Length - 1)
+                    {
+                        sb.Append("\n");
+                    }
+                }
+                exchange_pdamageText.text = sb.ToString();
+            }
+
+
+            // 몬스터 UI 셋팅
+            if (slot.targetSlot != null)
+            {
+                if (slot.attackType == Attack_Slot.AttackType.Exchange_Attacks)
+                {
+                    // 몬스터 합 공격 받아오기
+                    Attack_Base enemyAttack = slot.targetSlot.myAttack;
+
+                    // UI 셋팅
+                    eExchangeUISet.SetActive(true);
+                    exchange_eIconImage.sprite = enemyAttack.icon;
+                    exchange_eAttackNameText.text = enemyAttack.attackName;
+                    exchange_eDescriptionText.text = enemyAttack.attackName;
+                    System.Text.StringBuilder sb2 = new System.Text.StringBuilder();
+                    for (int i = 0; i < enemyAttack.damageValue.Length; i++)
+                    {
+                        sb2.Append($"{enemyAttack.damageValue[i].x} ~ {enemyAttack.damageValue[i].y}");
+                        if (i < enemyAttack.damageValue.Length - 1)
+                        {
+                            sb2.Append("\n");
+                        }
+                    }
+                    exchange_edamageText.text = sb2.ToString();
+                }
+            }
         }
         else
         {
-            engageUISet.SetActive(false);
+            // UI 종료
+            exchangeSet.SetActive(false);
+            pExchangeUISet.SetActive(false);
+            eExchangeUISet.SetActive(false);
         }
+    }
+
+    // 전투 시작 버튼 활성화
+    public void Turn_AttackButton(bool isOn)
+    {
+        turn_FightButton.interactable = isOn;
     }
 
     // 전투 시작 페이드
@@ -241,5 +334,6 @@ public class Player_UI : MonoBehaviour
 
         isFade = false;
     }
+
     #endregion
 }

@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Easing.Tweening;
-using UnityEngine.UIElements;
 
 
 public class Player_Turn : MonoBehaviour
@@ -23,17 +22,20 @@ public class Player_Turn : MonoBehaviour
     3. 일방 공격
 	    = 플레이어&몬스터가 누구를 몇번 일방공격 하는가?
     */
+
     [Header("=== State ===")]
     public bool isSpawnAnim;
     public bool isSelect;
-    public bool isEngageMove;
+    public bool isExchangeMove;
     public bool isRecoilMove;
+    private bool isExchangeTargetSelect;
 
     public enum RecoilType { Win, Draw, Lose }
 
+
     [Header("=== Attack Setting ===")]
     public List<Attack_Slot> attackSlot;
-
+    [SerializeField] private List<Attack_Slot> enemyAttackList; // 상대 공격 받아오기
 
     [Header("=== Pos Setting ===")]
     [SerializeField] private Transform[] recoilPos;
@@ -47,10 +49,11 @@ public class Player_Turn : MonoBehaviour
     // 맨 처음 전투 시작할 때 호출 -> 등장 모션 같은거
     public void Turn_StartAnim()
     {
-        curCoroutine = StartCoroutine(StartAnimCall());
+        curCoroutine = StartCoroutine(Turn_StartAnimCall());
     }
 
-    private IEnumerator StartAnimCall()
+
+    private IEnumerator Turn_StartAnimCall()
     {
         isSpawnAnim = true;
 
@@ -73,9 +76,26 @@ public class Player_Turn : MonoBehaviour
         isSpawnAnim = false;
     }
 
-    // 공격 선택
-    public void Turn_Select()
+
+    // 지금은 기본값만 던지지만, 버프 발라진 값을 던지는 기능도 필요함!
+    public void Slot_SpeedSetting()
     {
+        for (int i = 0; i < attackSlot.Count; i++)
+        {
+            int ran = Random.Range(Player_Manager.instnace.SlotSpeed.x, Player_Manager.instnace.SlotSpeed.y);
+            attackSlot[i].Speed_Setting(ran);
+        }
+    }
+
+
+    // 공격 선택 턴 시작
+    public void Turn_AttackSelect()
+    {
+        if(isExchangeTargetSelect)
+        {
+            return;
+        }
+
         isSelect = true;
         
         // 슬롯 정리 -> 남아있는 공격 있을 경우 대비
@@ -85,18 +105,81 @@ public class Player_Turn : MonoBehaviour
         }
 
         // 선택 UI On
-        Player_UI.instance.TurnFight_Select(true);
+        Player_UI.instance.Turn_FightSelect(true);
     }
 
+
+    // 슬롯에 공격 삽입
+    public void Slot_AttackSetting(Attack_Base attack)
+    {
+        Debug.Log("Call slotSetting");
+        for(int i = 0;i < attackSlot.Count; i++)
+        {
+           if(!attackSlot[i].haveAttack)
+            {
+                attackSlot[i].Attack_Setting_Player(attack);
+                Slot_TargetSetting(attackSlot[i]);
+                break;
+            }
+        }
+
+        Debug.Log("full skill");
+    }
+
+
+    // 해당 슬롯으로 뭘 때릴지 선택
+    public void Slot_TargetSetting(Attack_Slot slot)
+    {
+        StartCoroutine(Slot_TargetSettingCall(slot));
+    }
+
+
+    private IEnumerator Slot_TargetSettingCall(Attack_Slot slot)
+    {
+        Debug.Log("Call Slot Target Setting");
+        isExchangeTargetSelect = true;
+
+        // 리스트 정리 -> 몹이 죽은 경우 null 뜰 수도 있으니
+        enemyAttackList?.Clear(); // -> 이건 null 전파 기능이라는데 아마 삼항처럼 줄이는 용도인듯?
+
+        // 몬스터 공격 슬롯 가져오기
+        enemyAttackList = Player_Manager.instnace.turnManger.GetEnemyAttackSlot();
+
+        // 플레이어가 선택할 때 까지 대기
+        // -> 이 부분 bool 값으로 조건 바꾸고 플레이어가 UI로 이리저리 선택하는 모습 있어야 할듯...
+        while(isExchangeTargetSelect)
+        {
+            // -> 여기 작업중인데 어떻게 동작시켜야할까?
+            // 당상 떠오르는건 슬롯마다 위에 에징 ui 띄우고 + A로 합 일방공격 보여주는건데...
+            // 강조 표시 있으면 더 좋을거 같고.
+            yield return null;
+        }
+
+        // 상대 선택 후 아직 지정하지 않은 슬롯이 있는지 체크
+        for (int i = 0; i < attackSlot.Count; i++)
+        {
+            // 아직 공격을 전부 지정하지 않았을 경우
+            if(!attackSlot[i].haveAttack)
+            {
+                break;
+            }
+        }
+
+        // 모든 슬롯에 공격이 지정된 경우
+        Player_UI.instance.Turn_AttackButton(true);
+    }
+
+
     // 합 이동
-    public void Turn_EngageMove(Transform movePos)
+    public void Turn_ExchangeMove(Transform movePos)
     {
         curCoroutine = StartCoroutine(Turn_EngageMoveCall(movePos));
     }
 
+
     private IEnumerator Turn_EngageMoveCall(Transform movePos)
     {
-        isEngageMove = true;
+        isExchangeMove = true;
 
         Vector3 startPos = transform.position;
         Vector3 endPos = movePos.position;
@@ -108,17 +191,19 @@ public class Player_Turn : MonoBehaviour
             yield return null;
         }
 
-        isEngageMove = false;
+        isExchangeMove = false;
     }
+
 
     // 합 애니메이션
-    public void EngageResuit(RecoilType type)
+    public void Turn_ExchangeResuit(RecoilType type)
     {
-        curCoroutine = StartCoroutine(EngageAnimCall(type));
+        curCoroutine = StartCoroutine(Turn_ExchangeAnimCall(type));
     }
 
+
     // 합 종료 후 승리, 무승부, 패배 애니메이션
-    private IEnumerator EngageAnimCall(RecoilType type)
+    private IEnumerator Turn_ExchangeAnimCall(RecoilType type)
     {
         isRecoilMove = true;
 
@@ -129,7 +214,7 @@ public class Player_Turn : MonoBehaviour
         yield return new WaitForSeconds(Random.Range(0.5f, 1f));
 
         // Recoil Move
-        StartCoroutine(RecoilMove(type));
+        StartCoroutine(Turn_RecoilMove(type));
 
         // Win & Lose Animation
         switch (type)
@@ -165,8 +250,9 @@ public class Player_Turn : MonoBehaviour
         isRecoilMove = false;
     }
 
-    // 합 이동 기능
-    private IEnumerator RecoilMove(RecoilType type)
+
+    // 합 밀림 이동
+    private IEnumerator Turn_RecoilMove(RecoilType type)
     {
         isRecoilMove = true;
 
@@ -187,11 +273,13 @@ public class Player_Turn : MonoBehaviour
         isRecoilMove = false;
     }
 
+
     // 맨 마지막 전투 종료 할 때 호출 -> 승리/사망 모션 같은거
     public void Turn_End()
     {
         StartCoroutine(Turn_EndCall());
     }
+
 
     // 애니메이션 -> 아직 애니메이션 이후 기능 안만듬!
     private IEnumerator Turn_EndCall()

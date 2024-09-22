@@ -54,7 +54,11 @@ public class Player_World : MonoBehaviour
         moveDir = new Vector3(x, 0, z);
 
         // Movement
-        controller.Move(new Vector3(moveDir.x, yDir, moveDir.z));
+        if(moveDir.magnitude > 0.1f)
+        {
+            controller.Move(new Vector3(moveDir.x, yDir, moveDir.z).normalized * moveSpeed * Time.deltaTime);
+        }
+
     }
 
     private void Jump()
