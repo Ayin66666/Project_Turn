@@ -102,18 +102,52 @@ public class Player_UI : MonoBehaviour
         {
             TurnFight_Fade();
         }
+
+        Option();
+
+        // HP 테스트용
+        Hp();
     }
 
     // 이쪽만 작업하면 됨
     #region World UI
     public void Option()
     {
+        if(Input.GetKeyDown(KeyCode.Escape))
+        {
+            if(!isOptionOn)
+            {
+                isOptionOn = true;
+                optionSet.SetActive(true);
+            }
+            else
+            {
+                isOptionOn = false;
+                optionSet.SetActive(false);
+            }
+        }
+    }
 
+    public void Option_Click_Exit()
+    {
+        isExitOn = true;
+        exitSet.SetActive(true);
+    }
+
+    public void Option_Click_ExitOff()
+    {
+        isExitOn = false;
+        exitSet.SetActive(false);
     }
 
     public void Hp()
     {
+        // 월드에서는 한번만 호출하는용 만들기
+        // 턴에서만 업데이트
 
+        hpSlider.value = ((float)Player_Manager.instnace.curHp / (float)Player_Manager.instnace.maxHp);
+
+        hpText.text = Player_Manager.instnace.curHp + " / " + Player_Manager.instnace.maxHp;
     }
     #endregion
 
