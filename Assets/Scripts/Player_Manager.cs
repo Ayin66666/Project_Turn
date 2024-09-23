@@ -94,6 +94,15 @@ public class Player_Manager : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        // 현재 체력이 최대 체력보다 오버하는 거 방지
+        if(curHp > maxHp)
+        {
+            curHp = maxHp;
+        }
+    }
+
     public void Take_Damage(int damage, DamageType type)
     {
         if(isDie)

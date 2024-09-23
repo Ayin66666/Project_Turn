@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028334, g: 0.22571328, b: 0.3069217, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -4045,7 +4045,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 387367299}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 494981887}
+        m_TargetAssemblyTypeName: Player_UI, Assembly-CSharp
+        m_MethodName: Option_Click_ExitOff
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &387367299
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6042,7 +6054,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 597865578}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 494981887}
+        m_TargetAssemblyTypeName: Player_UI, Assembly-CSharp
+        m_MethodName: Option_Click_Exit
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &597865578
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24562,7 +24586,6 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8
   canDash: 0
-  canJump: 0
   controller: {fileID: 2023246120}
   trail: {fileID: 0}
 --- !u!143 &2023246120
@@ -24804,8 +24827,8 @@ MonoBehaviour:
   isAttack: 0
   canMove: 1
   isDie: 0
-  maxHp: 0
-  curHp: 0
+  maxHp: 100
+  curHp: 100
   physicalDefense: 0
   magicalDefense: 0
   physicalDamage: 0

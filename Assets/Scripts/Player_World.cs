@@ -18,7 +18,6 @@ public class Player_World : MonoBehaviour
     [Header("=== Move Setting ===")]
     [SerializeField] private LayerMask groundLayer;
     [SerializeField] private bool canDash;
-    [SerializeField] private bool canJump;
     private float yDir;
     private Vector3 moveDir;
 
@@ -31,7 +30,6 @@ public class Player_World : MonoBehaviour
     private void OnEnable()
     {
         canDash = true;
-        canJump = true;
     }
 
     private void Update()
@@ -39,8 +37,11 @@ public class Player_World : MonoBehaviour
         if (Player_Manager.instnace.canMove)
         {
             Movement();
-            Jump();
-            Dash();
+
+            if (Input.GetKeyDown(KeyCode.LeftShift) && canDash)
+            {
+                StartCoroutine(Dash());
+            }
         }
 
         Cooldown();
@@ -61,30 +62,27 @@ public class Player_World : MonoBehaviour
 
     }
 
-    private void Jump()
+    private IEnumerator Dash()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            canJump = false;
-            yDir = 10f;
-            curDashCooldown = dashCooldown;
-        }
+
+        StartCoroutine(Cooldown());
+
+
+        yield return null;
     }
 
-    private void Dash()
+    private IEnumerator Cooldown()
     {
-        if (Input.GetKeyDown(KeyCode.LeftShift))
-        {
+        canDash = false;
 
-        }
-    }
-
-    private void Cooldown()
-    {
-        if(curDashCooldown > 0)
+        while(curDashCooldown > 0)
         {
             curDashCooldown -= Time.deltaTime;
+
+            yield return null;
         }
+
+        canDash = true;
     }
 
     private void GourndCheck()
