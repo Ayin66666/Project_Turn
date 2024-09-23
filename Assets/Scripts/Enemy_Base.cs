@@ -24,7 +24,7 @@ public class Attack_Pattern
 
 public abstract class Enemy_Base : MonoBehaviour
 {
-    public enum DamageType { phsical, magicl }
+    public enum DamageType { physical, magical }
     public enum RecoilType { Win, Draw, Lose }
 
     [Header("=== State ===")]
@@ -192,19 +192,17 @@ public abstract class Enemy_Base : MonoBehaviour
         }
 
         // 데미지 계산
-        int dam;
         switch (type)
         {
-            case DamageType.phsical:
-                dam = damage *= physicalDamage;
-                hp -= dam;
+            case DamageType.physical:
+                hp -= damage * physicalDamage;
                 break;
 
-            case DamageType.magicl:
-                dam = damage * magicalDefense;
-                hp -= dam;
+            case DamageType.magical:
+                hp -= damage * magicalDefense;
                 break;
         }
+
         // 사망 체크
         if (hp <= 0)
         {

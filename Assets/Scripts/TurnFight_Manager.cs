@@ -228,31 +228,37 @@ public class TurnFight_Manager : MonoBehaviour
             //  - 한쪽의 공격 횟수가 0 이 될때까지 반복
             //  - 끝나면 이긴 쪽에서 공격 실시
 
+            // 공격 타입 별 동작
             switch (combine[i].attackType)
             {
+                // 일방 공격의 경우
                 case Attack_Slot.AttackType.Oneside_Attack:
 
+                    // 공격 대상 체크
                     switch (combine[i].slotType)
                     {
+                        // 플레이어 일방 공격
                         case Attack_Slot.SlotType.Player:
                             for (int i2 = 0; i2 < combine[i].remainingAttackCount; i2++)
                             {
                                 int damage = combine[i].DamageCal(i2);
                                 // 이거 지금은 물리데미지 일변도인데, 공격에 데미지 타입 나눠야 함!
-                                combine[i].targetSlot.slotOwner.GetComponent<Enemy_Base>().TakeDamage(damage, Enemy_Base.DamageType.phsical);
+                                combine[i].targetSlot.slotOwner.GetComponent<Enemy_Base>().TakeDamage(damage, Enemy_Base.DamageType.physical);
                             }
                             break;
 
+                        // 애너미 일방 공격
                         case Attack_Slot.SlotType.Enemy:
                             for (int i2 = 0; i2 < combine[i].remainingAttackCount; i2++)
                             {
                                 int damage = combine[i].DamageCal(i2);
-                                Player_Manager.instnace.Take_Damage(damage, Player_Manager.DamageType.phsical);
+                                Player_Manager.instnace.Take_Damage(damage, Player_Manager.DamageType.physical);
                             }
                             break;
                     }
                     break;
 
+                // 합 공격의 경우
                 case Attack_Slot.AttackType.Exchange_Attacks:
                     break;
             }

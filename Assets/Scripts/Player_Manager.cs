@@ -14,7 +14,7 @@ public class Player_Manager : MonoBehaviour
     public Action buffAction;
 
     public enum State { World, Turn }
-    public enum DamageType { phsical, magicl }
+    public enum DamageType { physical, magical }
     public enum HitEffect { None, Groggy }
 
     [Header("=== Component ===")]
@@ -96,7 +96,26 @@ public class Player_Manager : MonoBehaviour
 
     public void Take_Damage(int damage, DamageType type)
     {
+        if(isDie)
+        {
+            return;
+        }
 
+        switch (type)
+        {
+            case DamageType.physical:
+                curHp -= damage * physicalDefense;
+                break;
+
+            case DamageType.magical:
+                curHp -= damage * magicalDefense;
+                break;
+        }
+
+        if(curHp <= 0)
+        {
+            
+        }
     }
 
     public void Turn_Fight_Start(Transform movePos, TurnFight_Manager manager)
