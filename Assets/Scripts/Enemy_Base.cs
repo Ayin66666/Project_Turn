@@ -22,10 +22,26 @@ public class Attack_Pattern
 }
 
 
+[System.Serializable] // 이렇게 구현하고 Effexct() 함수를 이벤트로 구독하는 방식으로? 
+public class Hit_Effect
+{
+    public EffectType type;
+    public int startTurn;
+    public int endTurn;
+
+    public enum EffectType {a, b, c, d }
+    public void Effect()
+    {
+
+    }
+}
+
+
 public abstract class Enemy_Base : MonoBehaviour
 {
     public enum DamageType { physical, magical }
-    public enum RecoilType { Win, Draw, Lose }
+    public enum HitEfftectType { }
+    public enum ExchangeResuit { Win, Draw, Lose }
 
     [Header("=== State ===")]
     public bool isDie;
@@ -75,11 +91,13 @@ public abstract class Enemy_Base : MonoBehaviour
         return Player_Manager.instnace.player_Turn.attackSlot[ran];
     }
 
+
     // 합 이동 호출
     public void Turn_ExchangeMove(Transform movePos)
     {
         curCoroutine = StartCoroutine(Turn_ExchangeMoveCall(movePos));
     }
+
 
     // 합 이동 동작
     private IEnumerator Turn_ExchangeMoveCall(Transform movePos)
@@ -99,21 +117,32 @@ public abstract class Enemy_Base : MonoBehaviour
         isExchangeMove = false;
     }
 
+
     // 합 계산
     public int DamageCal(int slotCount, int attackCount)
     {
         int damage = Random.Range(attacklist[slotCount].damageValue[attackCount].x, attacklist[attackCount].damageValue[attackCount].y);
         return damage;
     }
-    
-    // 합 애니메이션 호출
-    public void ExchangeResuit(RecoilType type)
+
+
+    // 합 시작 애니매이션
+    public void Turn_ExchangeStartAnim()
     {
-        curCoroutine = StartCoroutine(ExchangeAnimCall(type));
+        anim.SetTrigger("Exchange");
+        anim.SetBool("isExchange", true);
     }
 
+
+    // 합 결과 애니메이션 호출
+    public void Turn_ExchangeResuitAnim(ExchangeResuit type)
+    {
+        curCoroutine = StartCoroutine(Turn_ExchangeRessuitAnimCall(type));
+    }
+
+
     // 합 종료 후 승리, 무승부, 패배 애니메이션 동작
-    private IEnumerator ExchangeAnimCall(RecoilType type)
+    private IEnumerator Turn_ExchangeRessuitAnimCall(ExchangeResuit type)
     {
         isRecoilMove = true;
 
@@ -124,12 +153,12 @@ public abstract class Enemy_Base : MonoBehaviour
         yield return new WaitForSeconds(Random.Range(0.5f, 1f));
 
         // Recoil Move
-        StartCoroutine(RecoilMove(type));
+        StartCoroutine(Turn_ExchangeResuitMoveCall(type));
 
         // Win & Lose Animation
         switch (type)
         {
-            case RecoilType.Win:
+            case ExchangeResuit.Win:
                 anim.SetBool("EngageWin", true);
                 while (anim.GetBool("EngageWin"))
                 {
@@ -137,7 +166,7 @@ public abstract class Enemy_Base : MonoBehaviour
                 }
                 break;
 
-            case RecoilType.Draw:
+            case ExchangeResuit.Draw:
                 anim.SetBool("EngageDraw", true);
                 while (anim.GetBool("EngageDraw"))
                 {
@@ -145,7 +174,7 @@ public abstract class Enemy_Base : MonoBehaviour
                 }
                 break;
 
-            case RecoilType.Lose:
+            case ExchangeResuit.Lose:
                 anim.SetBool("EngageLose", true);
                 while (anim.GetBool("EngageLose"))
                 {
@@ -160,14 +189,15 @@ public abstract class Enemy_Base : MonoBehaviour
         isRecoilMove = false;
     }
 
+
     // 합 이동 동작
-    private IEnumerator RecoilMove(RecoilType type)
+    private IEnumerator Turn_ExchangeResuitMoveCall(ExchangeResuit type)
     {
         isRecoilMove = true;
 
         // Recoil Move
         Vector3 startPos = transform.position;
-        Vector3 endPos = recoilPos[type == RecoilType.Win ? 0 : (type == RecoilType.Draw ? 1 : 2)].position;
+        Vector3 endPos = recoilPos[type == ExchangeResuit.Win ? 0 : (type == ExchangeResuit.Draw ? 1 : 2)].position;
         float timer = 0;
         while (timer < 1)
         {
@@ -181,6 +211,7 @@ public abstract class Enemy_Base : MonoBehaviour
 
         isRecoilMove = false;
     }
+
 
     // 몬스터 데미지 기능
     public void TakeDamage(int damage, DamageType type)
@@ -214,8 +245,17 @@ public abstract class Enemy_Base : MonoBehaviour
         HitAnim();
     }
 
+
+    // 피격 디버프
+    public void HitEffect()
+    {
+
+    }
+
+
     // 피격 호출
     public abstract void HitAnim();
+
 
     // 사망 호출
     public abstract void Die();

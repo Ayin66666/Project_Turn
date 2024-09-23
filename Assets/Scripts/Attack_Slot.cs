@@ -130,6 +130,11 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         }
     }
 
+    public void Attack()
+    {
+
+    }
+
     // 전투 종료 후 슬롯 리셋
     public void ResetSlot()
     {

@@ -30,7 +30,7 @@ public class Player_Turn : MonoBehaviour
     public bool isRecoilMove;
     private bool isExchangeTargetSelect;
 
-    public enum RecoilType { Win, Draw, Lose }
+    public enum ExchangeResuit { Win, Draw, Lose }
 
 
     [Header("=== Attack Setting ===")]
@@ -194,32 +194,43 @@ public class Player_Turn : MonoBehaviour
         isExchangeMove = false;
     }
 
-
-    // 합 애니메이션
-    public void Turn_ExchangeResuit(RecoilType type)
+    // 합 시작 애니매이션
+    public void Turn_ExchangeStartAnim()
     {
-        curCoroutine = StartCoroutine(Turn_ExchangeAnimCall(type));
+        anim.SetTrigger("Exchange");
+        anim.SetBool("isExchange", true);
+    }
+
+    // 합 결과 애니메이션 호출
+    public void Turn_ExchangeResuitAnim(ExchangeResuit type)
+    {
+        curCoroutine = StartCoroutine(Turn_ExchangeResuitAnimCall(type));
     }
 
 
-    // 합 종료 후 승리, 무승부, 패배 애니메이션
-    private IEnumerator Turn_ExchangeAnimCall(RecoilType type)
+    // 합 결과 애니메이션 동작
+    private IEnumerator Turn_ExchangeResuitAnimCall(ExchangeResuit type)
     {
         isRecoilMove = true;
 
-        anim.SetTrigger("Attack");
-        anim.SetBool("EngageAnim", true);
 
-        // Delay
-        yield return new WaitForSeconds(Random.Range(0.5f, 1f));
+        // 애니메이션 대기 종료
+        anim.SetTrigger("Exchange");
+        anim.SetBool("isExchange", false);
 
-        // Recoil Move
-        StartCoroutine(Turn_RecoilMove(type));
 
-        // Win & Lose Animation
+        // 합 후 딜레이
+        yield return new WaitForSeconds(Random.Range(0.25f, 0.5f));
+
+
+        // 합 후 밀림 이동 동작
+        StartCoroutine(Turn_ExchanageResuitMove(type));
+
+
+        // 합 애니메이션
         switch (type)
         {
-            case RecoilType.Win:
+            case ExchangeResuit.Win:
                 anim.SetBool("EngageWin", true);
                 while (anim.GetBool("EngageWin"))
                 {
@@ -227,7 +238,7 @@ public class Player_Turn : MonoBehaviour
                 }
                 break;
 
-            case RecoilType.Draw:
+            case ExchangeResuit.Draw:
                 anim.SetBool("EngageDraw", true);
                 while (anim.GetBool("EngageDraw"))
                 {
@@ -235,7 +246,7 @@ public class Player_Turn : MonoBehaviour
                 }
                 break;
 
-            case RecoilType.Lose:
+            case ExchangeResuit.Lose:
                 anim.SetBool("EngageLose", true);
                 while (anim.GetBool("EngageLose"))
                 {
@@ -244,21 +255,23 @@ public class Player_Turn : MonoBehaviour
                 break;
         }
 
-        // Delay
+
+        // 밀림 이후 대기
         yield return new WaitForSeconds(Random.Range(0.25f, 0.55f));
+
 
         isRecoilMove = false;
     }
 
 
-    // 합 밀림 이동
-    private IEnumerator Turn_RecoilMove(RecoilType type)
+    // 합 밀림 이동 동작
+    private IEnumerator Turn_ExchanageResuitMove(ExchangeResuit type)
     {
         isRecoilMove = true;
 
         // Recoil Move
         Vector3 startPos = transform.position;
-        Vector3 endPos = recoilPos[type == RecoilType.Win ? 0 : (type == RecoilType.Draw ? 1 : 2)].position;
+        Vector3 endPos = recoilPos[type == ExchangeResuit.Win ? 0 : (type == ExchangeResuit.Draw ? 1 : 2)].position;
         float timer = 0;
         while(timer < 1)
         {

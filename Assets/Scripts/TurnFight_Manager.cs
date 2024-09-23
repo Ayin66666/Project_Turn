@@ -8,8 +8,14 @@ public class TurnFight_Manager : MonoBehaviour
     [SerializeField] private Turn curTurn;
     [SerializeField] private int nextAttackDelay;
 
+    private bool isExchangeMove;
+    private bool isExchange;
+    private bool isAttack;
+
+
     private enum Turn { Await, Start, Select, Fight, End }
     private enum ExchangeType { OneSide, Exchange }
+    private enum Object { Player, Enemy }
 
     [Header("=== Pos Setting ===")]
     [SerializeField] private Transform playerExchanagePos;
@@ -26,6 +32,10 @@ public class TurnFight_Manager : MonoBehaviour
     [Header("=== Attack Setting===")]
     [SerializeField] private List<Attack_Slot> playerAttacks;
     [SerializeField] private List<Attack_Slot> enemyAttacks;
+
+    private Attack_Slot playerSlot;
+    private Attack_Slot enemySlot;
+    private Enemy_Base enemy;
 
 
     // 1. 페이드 연출 호출
@@ -64,7 +74,7 @@ public class TurnFight_Manager : MonoBehaviour
         Player_UI.instance.TurnFight_Fade();
 
         // 페이드 인 될때까지 대기
-        yield return new WaitForSeconds(1f); 
+        yield return new WaitForSeconds(1f);
 
 
         // 2. 전투 필드로 플레이어 이동
@@ -159,110 +169,62 @@ public class TurnFight_Manager : MonoBehaviour
         // 공격 속도대로 순차적 공격
         for (int i = 0; i < combine.Count; i++)
         {
+            // 슬롯 셋팅
+            Attack_Setting(combine[i]);
+
+            // 6. 플레이어 - 몬스터 이동
             switch (combine[i].attackType)
             {
-                case Attack_Slot.AttackType.None: // 공격 없을 경우
+                // 공격 없을 경우
+                case Attack_Slot.AttackType.None:
                     break;
 
-                case Attack_Slot.AttackType.Oneside_Attack: // 6. 플레이어 - 몬스터 이동 (일방 공격)
-                    // 몬스터 - 플레이어 중 누구의 공격인지 체크
-                    switch (combine[i].slotType) 
-                    {
-                        case Attack_Slot.SlotType.Player:
-                            Player_Manager.instnace.player_Turn.Turn_ExchangeMove(playerExchanagePos);
-                            break;
-
-                        case Attack_Slot.SlotType.Enemy:
-                            combine[i].slotOwner.GetComponent<Enemy_Base>().Turn_ExchangeMove(enemyExchanagePos);
-                            break;
-                    }
+                // 플레이어 - 몬스터 이동 (일방 공격)
+                case Attack_Slot.AttackType.Oneside_Attack:
+                    StartCoroutine(Turn_ExchangeMove_OneSide(combine[i].slotType == Attack_Slot.SlotType.Player ? Object.Player : Object.Enemy));
                     break;
 
-                case Attack_Slot.AttackType.Exchange_Attacks: // 6. 플레이어 - 몬스터 이동 (합 공격)
-                    Player_Manager.instnace.player_Turn.Turn_ExchangeMove(playerExchanagePos);
-                    combine[i].slotOwner.GetComponent<Enemy_Base>().Turn_ExchangeMove(enemyExchanagePos);
+                // 플레이어 - 몬스터 이동 (합 공격)
+                case Attack_Slot.AttackType.Exchange_Attacks:
+                    StartCoroutine(Turn_ExchangeMove_Exchange());
                     break;
             }
-
 
             // 이동 대기
+            while(isExchangeMove)
+            {
+                yield return null;
+            }
+
+
+            // 7. 플레이어 - 몬스터 합 시작 애니메이션
             if (combine[i].attackType == Attack_Slot.AttackType.Exchange_Attacks)
             {
-                // 합 공격의 경우 - 둘 다 이동이 끝날때까지 대기
-                Enemy_Base enemy = combine[i].slotOwner.GetComponent<Enemy_Base>();
-                while (Player_Manager.instnace.player_Turn.isExchangeMove || enemy.isExchangeMove)
-                {
-                    yield return null;
-                }
-            }
-            else
-            {
-                // 일방 공격의 경우
-                switch (combine[i].slotType)
-                {
-                    // 플레이어 일방 공격
-                    case Attack_Slot.SlotType.Player:
-                        while(Player_Manager.instnace.player_Turn.isExchangeMove)
-                        {
-                            yield return null;
-                        }
-                        break;
-                    // 애너미 일방 공격
-                    case Attack_Slot.SlotType.Enemy:
-                        Enemy_Base enemy = combine[i].slotOwner.GetComponent<Enemy_Base>();
-                        while (enemy.isExchangeMove)
-                        {
-                            yield return null;
-                        }
-                        break;
-                }
+                Player_Manager.instnace.player_Turn.Turn_ExchangeStartAnim();
+                enemy.Turn_ExchangeStartAnim();
+                yield return new WaitForSeconds(0.5f);
             }
 
-            // 7. 플레이어 - 몬스터 합
-
-            // 합을 어떻게 하지?
-            //  - 공격 타입 체크 후 각각의 공격값 받아오기
-            //  - 값 받아오는 김에 공격 전 모션 동작
-            //  - 받은 값 서로 비교
-            //  - 받은 값 중 높은쪽이 승리, 진 쪽은 공격 횟수 감소
-            //  - 한쪽의 공격 횟수가 0 이 될때까지 반복
-            //  - 끝나면 이긴 쪽에서 공격 실시
-
+            // 7. 플레이어 - 몬스터 합 결과 값 & 결과 애니메이션
             // 공격 타입 별 동작
             switch (combine[i].attackType)
             {
                 // 일방 공격의 경우
                 case Attack_Slot.AttackType.Oneside_Attack:
-
-                    // 공격 대상 체크
-                    switch (combine[i].slotType)
-                    {
-                        // 플레이어 일방 공격
-                        case Attack_Slot.SlotType.Player:
-                            for (int i2 = 0; i2 < combine[i].remainingAttackCount; i2++)
-                            {
-                                int damage = combine[i].DamageCal(i2);
-                                // 이거 지금은 물리데미지 일변도인데, 공격에 데미지 타입 나눠야 함!
-                                combine[i].targetSlot.slotOwner.GetComponent<Enemy_Base>().TakeDamage(damage, Enemy_Base.DamageType.physical);
-                            }
-                            break;
-
-                        // 애너미 일방 공격
-                        case Attack_Slot.SlotType.Enemy:
-                            for (int i2 = 0; i2 < combine[i].remainingAttackCount; i2++)
-                            {
-                                int damage = combine[i].DamageCal(i2);
-                                Player_Manager.instnace.Take_Damage(damage, Player_Manager.DamageType.physical);
-                            }
-                            break;
-                    }
+                    StartCoroutine(Turn_OneSideAttack(combine[i].slotType == Attack_Slot.SlotType.Player ? Object.Player : Object.Enemy, combine[i]));
                     break;
 
                 // 합 공격의 경우
                 case Attack_Slot.AttackType.Exchange_Attacks:
+                    StartCoroutine(Turn_ExchangeAttack());
                     break;
             }
 
+            // 공격 대기
+            while(isAttack)
+            {
+                yield return null;
+            }
 
 
             // 공격 종료 후 리스트에서 제거
@@ -287,6 +249,102 @@ public class TurnFight_Manager : MonoBehaviour
 
 
         // 8. 플레이어 - 몬스터 원위치
+        Turn_ReturnPos();
+    }
+
+
+    // 일방 공격 이동
+    private IEnumerator Turn_ExchangeMove_OneSide(Object moveObject)
+    {
+        isExchangeMove = true;
+
+        switch (moveObject)
+        {
+            case Object.Player:
+                while (Player_Manager.instnace.player_Turn.isExchangeMove)
+                {
+                    yield return null;
+                }
+                break;
+
+            case Object.Enemy:
+                while (enemy.isExchangeMove)
+                {
+                    yield return null;
+                }
+                break;
+        }
+
+        isExchangeMove = false;
+    }
+
+
+    // 플레이어 - 몬스터 슬롯 할당
+    private void Attack_Setting(Attack_Slot slot)
+    {
+        switch (slot.slotType)
+        {
+            case Attack_Slot.SlotType.Player:
+                playerSlot = slot;
+                enemySlot = slot.targetSlot;
+                enemy = slot.targetSlot.slotOwner.GetComponent<Enemy_Base>();
+                break;
+
+            case Attack_Slot.SlotType.Enemy:
+                enemySlot = slot;
+                playerSlot = slot.targetSlot;
+                enemy = slot.slotOwner.GetComponent<Enemy_Base>();
+                break;
+        }
+    }
+
+
+    // 합 공격 이동
+    private IEnumerator Turn_ExchangeMove_Exchange()
+    {
+        isExchangeMove = true;
+
+        
+        while (Player_Manager.instnace.player_Turn.isExchangeMove || enemy.isExchangeMove)
+        {
+            yield return null;
+        }
+
+        isExchangeMove = false;
+    }
+
+
+    // 일방 공격 동작 -> 여기부터 작업!
+    private IEnumerator Turn_OneSideAttack(Object attackOwner, Attack_Slot slot)
+    {
+        isAttack = true;
+        switch (attackOwner)
+        {
+            case Object.Player:
+                slot.Attack();
+                break;
+
+            case Object.Enemy:
+                slot.Attack();
+                break;
+        }
+        yield return null;
+        isAttack = false;
+    }
+
+
+    // 합 공격 동작
+    private IEnumerator Turn_ExchangeAttack()
+    {
+        isAttack = true;
+        yield return null;
+        isAttack = false;
+    }
+
+
+    // 8. 플레이어 - 몬스터 원위치
+    private void Turn_ReturnPos()
+    {
         Player_Manager.instnace.player_Turn.transform.position = playerReturnPos.position;
         for (int i = 0; i < enemys.Count; i++)
         {
