@@ -141,6 +141,11 @@ public class TurnFight_Manager : MonoBehaviour
             }
         }
 
+        for (int i3 = 0; i3 < enemyAttackList.Count; i3++)
+        {
+            Debug.Log(enemyAttackList[i3]);
+
+        }
         // 최종적으로 담아진 데이터 넘기기
         return enemyAttackList;
     }
@@ -216,7 +221,7 @@ public class TurnFight_Manager : MonoBehaviour
 
                 // 합 공격의 경우
                 case Attack_Slot.AttackType.Exchange_Attacks:
-                    StartCoroutine(Turn_ExchangeAttack());
+                    StartCoroutine(Turn_ExchangeAttack(combine[i], enemySlot));
                     break;
             }
 
@@ -318,29 +323,90 @@ public class TurnFight_Manager : MonoBehaviour
     private IEnumerator Turn_OneSideAttack(Object attackOwner, Attack_Slot slot)
     {
         isAttack = true;
-        switch (attackOwner)
-        {
-            case Object.Player:
-                slot.Attack();
-                break;
 
-            case Object.Enemy:
-                slot.Attack();
-                break;
-        }
+
         yield return null;
         isAttack = false;
     }
 
 
     // 합 공격 동작
-    private IEnumerator Turn_ExchangeAttack()
+    private IEnumerator Turn_ExchangeAttack(Attack_Slot playerSlot, Attack_Slot enemySlot)
     {
         isAttack = true;
-        yield return null;
-        isAttack = false;
+        
+        // 합 시작
+        // 플레이어 또는 몬스터의 공격 횟수가 전부 소진될때가지 반복
+        int playerCount = 0;
+        int enemyCount = 0;
+        while (playerCount < playerSlot.myAttack.attackCount || enemyCount < enemySlot.myAttack.attackCount)
+        {
+            // 데미지 계산
+            (int pdamage, bool isPC) = Player_Manager.instnace.DamageCal(playerSlot.myAttack, playerCount);
+            (int edamage, bool isCC) = enemy.DamageCal(enemySlot.myAttack, enemyCount);
+
+            // 치명타 뜨면 UI 부분에서 추가적인 이펙트 넣을 것!
+
+            // 합 결과
+            if(pdamage > edamage)
+            {
+                // 플레이어 승리
+                Player_Manager.instnace.player_Turn.Turn_ExchangeResuitAnim(Player_Turn.ExchangeResuit.Win);
+                enemy.Turn_ExchangeResuitAnim(Enemy_Base.ExchangeResuit.Lose);
+                enemyCount++;
+            }
+            else if( pdamage == edamage)
+            {
+                // 무승부
+                Player_Manager.instnace.player_Turn.Turn_ExchangeResuitAnim(Player_Turn.ExchangeResuit.Draw);
+                enemy.Turn_ExchangeResuitAnim(Enemy_Base.ExchangeResuit.Draw);
+            }
+            else
+            {
+                // 애너미 승리
+                Player_Manager.instnace.player_Turn.Turn_ExchangeResuitAnim(Player_Turn.ExchangeResuit.Lose);
+                enemy.Turn_ExchangeResuitAnim(Enemy_Base.ExchangeResuit.Win);
+                playerCount++;
+            }
+
+            // 다음 합 딜레이
+            yield return new WaitForSeconds(Random.Range(0.15f, 0.25f));
+        }
+
+        // 플레이어 - 몬스터 공격 호출
+        StartCoroutine(Turn_Attack((playerCount == 0 ? Object.Enemy : Object.Player), (playerCount == 0 ? enemySlot : playerSlot)));
     }
 
+    // 합 승리 & 일방공격 호출
+    private IEnumerator Turn_Attack(Object win, Attack_Slot slot)
+    {
+        switch(win)
+        {
+            case Object.Player:
+                // 공격 호출
+                Player_Manager.instnace.player_Turn.Turn_Attack(enemy.gameObject, slot.myAttack);
+
+                // 공격 종료까지 대기
+                while (Player_Manager.instnace.isAttack)
+                {
+                    yield return null;
+                }
+                break;
+
+            case Object.Enemy:
+                // 공격 호출
+                // enemy.Turn_Attack(Player_Manager.instnace.player_Turn.gameObject, slot.myAttack);
+
+                // 공격 종료까지 대기
+                while (enemy.isAttack)
+                {
+                    yield return null;
+                }
+                break;
+        }
+
+        isAttack = false;
+    }
 
     // 8. 플레이어 - 몬스터 원위치
     private void Turn_ReturnPos()

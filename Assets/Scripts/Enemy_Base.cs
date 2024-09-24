@@ -46,6 +46,7 @@ public abstract class Enemy_Base : MonoBehaviour
     [Header("=== State ===")]
     public bool isDie;
     public bool canAction;
+    public bool isAttack;
     public bool isExchangeMove;
     public bool isRecoilMove;
     protected Coroutine curCoroutine;
@@ -60,9 +61,10 @@ public abstract class Enemy_Base : MonoBehaviour
     public int physicalDamage;
     public int magcialDamage;
 
-    public float criticalChance;
+    public int criticalChance;
     public float criticalMultiplier;
 
+    private Vector2Int slotSpeed;
 
     [Header("=== Attack Setting ===")]
     public List<Attack_Slot> attack_Slots;
@@ -77,7 +79,49 @@ public abstract class Enemy_Base : MonoBehaviour
 
     [Header("=== Component ===")]
     [SerializeField] protected Enemy_UI enemyUI;
-    [SerializeField] protected Animator anim = null;
+    public Animator anim = null;
+
+    #region Property
+    public int PhysicalDefense
+    {
+        get { return physicalDefense; }
+        private set { physicalDefense = value; }
+    }
+    public int MagicDefense
+    {
+        get { return magicalDefense; }
+        private set { magicalDefense = value; }
+    }
+
+    public int PhysicalDamage
+    {
+        get { return physicalDamage; }
+        private set { physicalDamage = value; }
+    }
+    public int MagcialDamage
+    {
+        get { return magcialDamage; }
+        private set { magcialDamage = value; }
+    }
+
+    public int CriticalChance
+    {
+        get { return criticalChance; }
+        private set { criticalChance = value; }
+    }
+    public float CriticalMultiplier
+    {
+        get { return criticalMultiplier; }
+        private set { criticalMultiplier = value; }
+    }
+
+    public Vector2Int SlotSpeed
+    {
+        get { return slotSpeed; }
+        private set { slotSpeed = value; }
+    }
+
+    #endregion
 
 
     // 합 공격 설정 -> 이거 몬스터별 턴마다 특수공격까지 고려하면 각 몬스터마다 다르게 만드는게 맞을듯
@@ -118,11 +162,23 @@ public abstract class Enemy_Base : MonoBehaviour
     }
 
 
-    // 합 계산
-    public int DamageCal(int slotCount, int attackCount)
+    // 데미지 계산 -> 튜플 사용 (1개 이상의 값을 반환할 때 / C# 7.0 이상부터 가능!)
+    public (int, bool) DamageCal(Attack_Base attack, int count)
     {
-        int damage = Random.Range(attacklist[slotCount].damageValue[attackCount].x, attacklist[attackCount].damageValue[attackCount].y);
-        return damage;
+        // 데미지 공식 (기초 데미지 * 버프1 * 버프2 ... ) * 공격 배율 * 치명타 배율
+
+        // 물 & 마 데미지 인풋
+        int baseDamage = attack.damageType[count] == Attack_Base.DamageType.physical ? physicalDamage : magcialDamage;
+
+        // 공격 배율 계산
+        float valueDamage = baseDamage * Random.Range(attack.damageValue[count].x, baseDamage * attack.damageValue[count].y);
+
+        // 크리티컬 데미지 계산
+        int ran = Random.Range(0, 100);
+        valueDamage = ran <= criticalChance ? valueDamage *= criticalChance : valueDamage;
+
+        // 데미지 & 크리티컬 여부 반환
+        return ((int)valueDamage, ran <= criticalChance ? true : false);
     }
 
 

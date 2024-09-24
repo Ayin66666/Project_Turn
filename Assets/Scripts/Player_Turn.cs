@@ -35,15 +35,20 @@ public class Player_Turn : MonoBehaviour
 
     [Header("=== Attack Setting ===")]
     public List<Attack_Slot> attackSlot;
-    [SerializeField] private List<Attack_Slot> enemyAttackList; // 상대 공격 받아오기
+
 
     [Header("=== Pos Setting ===")]
     [SerializeField] private Transform[] recoilPos;
 
 
     [Header("=== Component ===")]
-    [SerializeField] private Animator anim;
+    public Animator anim;
     private Coroutine curCoroutine;
+
+
+    [Header("=== Target List ===")]
+    [SerializeField] private List<Attack_Slot> enemyAttackList;
+    [SerializeField] private int enemyIndex;
 
 
     // 맨 처음 전투 시작할 때 호출 -> 등장 모션 같은거
@@ -145,21 +150,50 @@ public class Player_Turn : MonoBehaviour
         // 몬스터 공격 슬롯 가져오기
         enemyAttackList = Player_Manager.instnace.turnManger.GetEnemyAttackSlot();
 
-        // 플레이어가 선택할 때 까지 대기
-        // -> 이 부분 bool 값으로 조건 바꾸고 플레이어가 UI로 이리저리 선택하는 모습 있어야 할듯...
-        while(isExchangeTargetSelect)
+        // 타겟 선택 UI
+        enemyIndex = 0;
+        Player_UI.instance.Turn_TargetSelect(true);
+        Player_UI.instance.Turn_TargetSelect_DataSetting(true, enemyAttackList[enemyIndex].slotOwner.GetComponent<Enemy_Base>());
+
+
+        // 타겟 선택까지 대기
+        while (Input.GetKeyDown(KeyCode.Space))
         {
-            // -> 여기 작업중인데 어떻게 동작시켜야할까?
-            // 당상 떠오르는건 슬롯마다 위에 에징 ui 띄우고 + A로 합 일방공격 보여주는건데...
-            // 강조 표시 있으면 더 좋을거 같고.
+            // 좌로 이동
+            if(Input.GetKeyDown(KeyCode.LeftArrow))
+            {
+                enemyIndex = enemyIndex < enemyAttackList.Count ? enemyIndex + 1 : 0;
+                Player_UI.instance.Turn_TargetSelect_DataSetting(true, enemyAttackList[enemyIndex].slotOwner.GetComponent<Enemy_Base>());
+            }
+
+            // 우로 이동
+            if(Input.GetKeyDown(KeyCode.RightArrow))
+            {
+                enemyIndex = enemyIndex > 0 ? enemyIndex - 1 : enemyAttackList.Count;
+                Player_UI.instance.Turn_TargetSelect_DataSetting(true, enemyAttackList[enemyIndex].slotOwner.GetComponent<Enemy_Base>());
+            }
+
             yield return null;
         }
 
+        slot.Attack_TargetSetting(slot);
+
+        // 타겟 선택 UI Off
+        Player_UI.instance.Turn_TargetSelect(false);
+
+
+        // 슬롯 상태 체크
+        Turn_FightButtonCheck();
+    }
+
+    // 전투 시작 버튼 활성화 체크
+    private void Turn_FightButtonCheck()
+    {
         // 상대 선택 후 아직 지정하지 않은 슬롯이 있는지 체크
         for (int i = 0; i < attackSlot.Count; i++)
         {
             // 아직 공격을 전부 지정하지 않았을 경우
-            if(!attackSlot[i].haveAttack)
+            if (!attackSlot[i].haveAttack)
             {
                 break;
             }
@@ -169,14 +203,14 @@ public class Player_Turn : MonoBehaviour
         Player_UI.instance.Turn_AttackButton(true);
     }
 
-
-    // 합 이동
+    // 합 이동 호출
     public void Turn_ExchangeMove(Transform movePos)
     {
         curCoroutine = StartCoroutine(Turn_EngageMoveCall(movePos));
     }
 
 
+    // 합 이동 동작
     private IEnumerator Turn_EngageMoveCall(Transform movePos)
     {
         isExchangeMove = true;
@@ -194,12 +228,14 @@ public class Player_Turn : MonoBehaviour
         isExchangeMove = false;
     }
 
+
     // 합 시작 애니매이션
     public void Turn_ExchangeStartAnim()
     {
         anim.SetTrigger("Exchange");
         anim.SetBool("isExchange", true);
     }
+
 
     // 합 결과 애니메이션 호출
     public void Turn_ExchangeResuitAnim(ExchangeResuit type)
@@ -284,6 +320,13 @@ public class Player_Turn : MonoBehaviour
         yield return new WaitForSeconds(Random.Range(0.15f, 0.25f));
 
         isRecoilMove = false;
+    }
+
+
+    // 공격 기능 호출 & 동작
+    public void Turn_Attack(GameObject target, Attack_Base attack)
+    {
+        attack.UseAttack(Attack_Base.AttackOwner.Player, gameObject, target);
     }
 
 

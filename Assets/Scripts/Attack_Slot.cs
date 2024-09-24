@@ -15,7 +15,7 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     public GameObject slotOwner;
     public bool haveAttack;
     public int slotSpeed;
-    public int remainingAttackCount;
+
     public enum SlotType { Player, Enemy }
     public enum AttackType { None, Oneside_Attack, Exchange_Attacks }
 
@@ -29,6 +29,11 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     [Header("=== Attack Iine ===")]
     [SerializeField] private LineRenderer line = null;
     private GameObject lineTarget;
+
+
+    [Header("=== Attack Setting===")]
+    private int minDamage;
+    private int maxDamage;
 
 
     // 공격 셋팅 - Player 버전
@@ -84,24 +89,6 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         slotSpeed = speed;
     }
 
-    // 이거도 따지고 보면 슬롯이 아니라 플레이어가 계산해야 하는거 아닌가?
-    public int DamageCal(int count)
-    {
-        // 여기에 버프에 따른 데미지 증감 구현 필요함!
-        // 지금은 기본값만 들가게 만듬!
-
-
-        // 기본 데미지
-        int minDamage = myAttack.damageValue[count].x;
-        int maxDamage = myAttack.damageValue[count].y;
-
-        // 버프 계산
-        
-
-        // 최종 데미지 결정
-        int damage = Random.Range(minDamage, maxDamage);
-        return damage;
-    }
 
     // 해당 슬롯으로 누굴 공격할건지 셋팅
     public void Attack_TargetSetting(Attack_Slot target)
@@ -130,10 +117,6 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         }
     }
 
-    public void Attack()
-    {
-
-    }
 
     // 전투 종료 후 슬롯 리셋
     public void ResetSlot()
@@ -142,7 +125,6 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         myAttack = null;
         lineTarget = null;
         line.enabled = false;
-        remainingAttackCount = 0;
     }
 
 

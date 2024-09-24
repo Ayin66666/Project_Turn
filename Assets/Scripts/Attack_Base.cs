@@ -10,14 +10,14 @@ public abstract class Attack_Base : MonoBehaviour
     [TextArea] public string attackDescription_Text; // 공격 설명
     public int attackCost; // 자원 소모량
     public int attackCount; // 공격 횟수
-    public Vector2Int[] damageValue; // 각 합마다 데미지 벨류
+    public Vector2[] damageValue; // 각 합마다 데미지 벨류
     public DamageType[] damageType; // 각 공격마다 물리&마법 데미지 체크
     public Sprite icon;
 
-    public enum DamageType { phsical, magicl }
+    public enum AttackOwner { Player, Enemy }
+    public enum DamageType { physical, magicl }
     public enum Type { Attack, Defense, Buff, Complex } // 나중에 스킬을 태그 별로 나눈다면?
 
 
-    public abstract void AttackSetting();
-
+    public abstract void UseAttack(AttackOwner attackOwner, GameObject ownerObj, GameObject targetObj);
 }

@@ -50,11 +50,18 @@ public class Player_UI : MonoBehaviour
     [SerializeField] private Material bossText_Material;
 
 
-    // 턴 전투 UI
+    // 턴 전투 플레이어 공격 선택 UI
     [Header("=== Turn Fight Select UI ===")]
     [SerializeField] private GameObject selectListSet;
     [SerializeField] private GameObject attackSlotSet;
     [SerializeField] private Button turn_FightButton;
+
+
+    // 턴 전투 플레이어 타겟 선택 UI
+    [Header("=== Turn Fight Target Select UI ===")]
+    [SerializeField] private GameObject targetSelectSet;
+    [SerializeField] private Image targetSelectBackgroundImage;
+    [SerializeField] private Text targetNameText;
 
 
     // 합 UI
@@ -162,6 +169,25 @@ public class Player_UI : MonoBehaviour
         attackSlotSet.SetActive(isOn);
     }
 
+    // 플레이어 타겟 선택 UI On / Off
+    public void Turn_TargetSelect(bool isOn)
+    {
+        targetSelectSet.SetActive(isOn);
+    }
+
+    // 플레이어 타겟 선택 데이터 받아오기 & 적용
+    public void Turn_TargetSelect_DataSetting(bool isOn, Enemy_Base enemy)
+    {
+        if(isOn)
+        {
+            targetNameText.text = enemy.status.EnemyName;
+        }
+        else
+        {
+            targetNameText.text = null;
+        }
+    }
+
     // 전투 자원 UI
     public void Turn_AttackPoint()
     {
@@ -263,7 +289,7 @@ public class Player_UI : MonoBehaviour
         turn_FightButton.interactable = isOn;
     }
 
-    // 전투 시작 페이드
+    // 전투 시작 페이드 호출
     public void TurnFight_Fade()
     {
         if(isFade)
@@ -274,6 +300,7 @@ public class Player_UI : MonoBehaviour
         StartCoroutine(FadeCall());
     }
 
+    // 전투 시작 페이드 동작
     private IEnumerator FadeCall()
     {
         isFade = true;
