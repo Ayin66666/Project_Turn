@@ -152,7 +152,7 @@ public class Player_Manager : MonoBehaviour
     public void Turn_Fight_Start(Transform movePos, TurnFight_Manager manager)
     {
         turnManger = manager;
-        player_Turn.gameObject.transform.position = movePos.position;
+        // player_Turn.gameObject.transform.position = movePos.position;
         player_World.gameObject.SetActive(false);
         player_Turn.gameObject.SetActive(true);
     }

@@ -103,6 +103,7 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
                 if (slotSpeed >= targetSlot.slotSpeed)
                 {
                     attackType = AttackType.Exchange_Attacks;
+                    target.Attack_TargetSetting(this);
                 }
                 else if (slotSpeed < targetSlot.slotSpeed)
                 {
@@ -112,7 +113,22 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
             case SlotType.Enemy:
                 // 몬스터는 무조건 먼저 공격을 셋팅하니 무조건 일방임!
-                attackType = AttackType.Oneside_Attack;
+                if(targetSlot.myAttack != null)
+                {
+                    attackType = AttackType.Oneside_Attack;
+                }
+                else
+                {
+                    // 속도에 따른 합 & 일방 공격 상태 설정
+                    if (slotSpeed >= targetSlot.slotSpeed)
+                    {
+                        attackType = AttackType.Exchange_Attacks;
+                    }
+                    else if (slotSpeed < targetSlot.slotSpeed)
+                    {
+                        attackType = AttackType.Oneside_Attack;
+                    }
+                }
                 break;
         }
     }
@@ -136,11 +152,39 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         {
             case SlotType.Player:
                 iconBorder.color = Color.gray;
-                Player_UI.instance.Turn_EngageUI(this, true);
+                switch (attackType)
+                {
+                    case AttackType.None:
+                        Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, this, true);
+                        break;
+
+                    case AttackType.Oneside_Attack:
+                        Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, this, true);
+                        break;
+
+                    case AttackType.Exchange_Attacks:
+                        Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, this, true);
+                        Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, targetSlot, true);
+                        break;
+                }
                 break;
 
             case SlotType.Enemy:
-                Player_UI.instance.Turn_EngageUI(this, true);
+                switch (attackType)
+                {
+                    case AttackType.None:
+                        Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, this, true);
+                        break;
+
+                    case AttackType.Oneside_Attack:
+                        Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, this, true);
+                        break;
+
+                    case AttackType.Exchange_Attacks:
+                        Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, this, true);
+                        Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, targetSlot, true);
+                        break;
+                }
                 break;
         }
 
@@ -152,11 +196,11 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         {
             case SlotType.Player:
                 iconBorder.color = Color.white;
-                Player_UI.instance.Turn_EngageUI(this, false);
+                Player_UI.instance.Turn_EngageUI(Player_UI.Object.None, this, false);
                 break;
 
             case SlotType.Enemy:
-                Player_UI.instance.Turn_EngageUI(this, false);
+                Player_UI.instance.Turn_EngageUI(Player_UI.Object.None, this, false);
                 break;
         }
 
@@ -167,6 +211,7 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         switch (slotType)
         {
             case SlotType.Player:
+                ResetSlot();
                 // 추가한다면 슬롯 초기화 기능?
                 break;
 

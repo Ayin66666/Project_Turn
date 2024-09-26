@@ -135,6 +135,7 @@ public class Player_Turn : MonoBehaviour
     // 해당 슬롯으로 뭘 때릴지 선택
     public void Slot_TargetSetting(Attack_Slot slot)
     {
+        Debug.Log("Call Slot TargetSetting");
         StartCoroutine(Slot_TargetSettingCall(slot));
     }
 
@@ -149,40 +150,53 @@ public class Player_Turn : MonoBehaviour
 
         // 몬스터 공격 슬롯 가져오기
         enemyAttackList = Player_Manager.instnace.turnManger.GetEnemyAttackSlot();
+        
 
-        // 타겟 선택 UI
+        // 타겟 선택 UI On
         enemyIndex = 0;
-        Player_UI.instance.Turn_TargetSelect(true);
         Player_UI.instance.Turn_TargetSelect_DataSetting(true, enemyAttackList[enemyIndex].slotOwner.GetComponent<Enemy_Base>());
+        Player_UI.instance.Turn_TargetSelect(true);
 
+        Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, slot, true);
+        Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, enemyAttackList[enemyIndex], true);
 
         // 타겟 선택까지 대기
-        while (Input.GetKeyDown(KeyCode.Space))
+        while (!Input.GetKeyDown(KeyCode.Space))
         {
-            // 좌로 이동
-            if(Input.GetKeyDown(KeyCode.LeftArrow))
+            if(enemyAttackList.Count > 1)
             {
-                enemyIndex = enemyIndex < enemyAttackList.Count ? enemyIndex + 1 : 0;
-                Player_UI.instance.Turn_TargetSelect_DataSetting(true, enemyAttackList[enemyIndex].slotOwner.GetComponent<Enemy_Base>());
-            }
+                // 좌로 이동
+                if (Input.GetKeyDown(KeyCode.LeftArrow))
+                {
+                    enemyIndex = (enemyIndex - 1 + enemyAttackList.Count) % enemyAttackList.Count;
+                    Player_UI.instance.Turn_TargetSelect_DataSetting(true, enemyAttackList[enemyIndex].slotOwner.GetComponent<Enemy_Base>());
+                    Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, slot, true);
+                    Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, enemyAttackList[enemyIndex], true);
+                }
 
-            // 우로 이동
-            if(Input.GetKeyDown(KeyCode.RightArrow))
-            {
-                enemyIndex = enemyIndex > 0 ? enemyIndex - 1 : enemyAttackList.Count;
-                Player_UI.instance.Turn_TargetSelect_DataSetting(true, enemyAttackList[enemyIndex].slotOwner.GetComponent<Enemy_Base>());
+                // 우로 이동
+                if (Input.GetKeyDown(KeyCode.RightArrow))
+                {
+                    enemyIndex = (enemyIndex + 1) % enemyAttackList.Count;
+                    Player_UI.instance.Turn_TargetSelect_DataSetting(true, enemyAttackList[enemyIndex].slotOwner.GetComponent<Enemy_Base>());
+                    Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, slot, true);
+                    Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, enemyAttackList[enemyIndex], true);
+                }
             }
 
             yield return null;
         }
 
-        slot.Attack_TargetSetting(slot);
+        // 타겟 셋팅
+        slot.Attack_TargetSetting(enemyAttackList[enemyIndex]);
+
 
         // 타겟 선택 UI Off
         Player_UI.instance.Turn_TargetSelect(false);
+        Player_UI.instance.Turn_EngageUI(Player_UI.Object.None, slot, false);
 
 
-        // 슬롯 상태 체크
+        // 전투 시작 체크
         Turn_FightButtonCheck();
     }
 

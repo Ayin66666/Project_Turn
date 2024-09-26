@@ -119,6 +119,10 @@ public class TurnFight_Manager : MonoBehaviour
         {
             yield return null;
         }
+
+
+        // 전투 시작
+        StartCoroutine(Turn_Fight());
     }
 
 
@@ -133,7 +137,7 @@ public class TurnFight_Manager : MonoBehaviour
             // 혹시 모를 리스트 null 체크
             if(enemys[i] != null)
             {
-                // 해당 몬스터으 공격 슬롯을 리스트에 담기
+                // 해당 몬스터의 공격 슬롯을 리스트에 담기
                 for (int i2 = 0; i2 < enemys[i].attack_Slots.Count; i2++)
                 {
                     enemyAttackList.Add(enemys[i].attack_Slots[i2]);
@@ -148,6 +152,12 @@ public class TurnFight_Manager : MonoBehaviour
         }
         // 최종적으로 담아진 데이터 넘기기
         return enemyAttackList;
+    }
+
+    // 전투 기능 동작
+    public void Turn_Fight_Call()
+    {
+        StartCoroutine(Turn_Fight());
     }
 
     // 전투 기능 동작
@@ -174,8 +184,9 @@ public class TurnFight_Manager : MonoBehaviour
         // 공격 속도대로 순차적 공격
         for (int i = 0; i < combine.Count; i++)
         {
-            // 슬롯 셋팅
-            Attack_Setting(combine[i]);
+            // 슬롯 셋팅 
+            Turn_Player_Enemy_Setting(combine[i]);
+
 
             // 6. 플레이어 - 몬스터 이동
             switch (combine[i].attackType)
@@ -285,7 +296,7 @@ public class TurnFight_Manager : MonoBehaviour
 
 
     // 플레이어 - 몬스터 슬롯 할당
-    private void Attack_Setting(Attack_Slot slot)
+    private void Turn_Player_Enemy_Setting(Attack_Slot slot)
     {
         switch (slot.slotType)
         {
