@@ -240,7 +240,7 @@ public class Player_UI : MonoBehaviour
         }
     }
 
-    // 플레이어 VS 애너미 공격 비교 UI -> 여기 작업중 -> 동작 테스트 필요함!
+    // 플레이어 VS 애너미 공격 비교 UI
     public void Turn_EngageUI(Object type, Attack_Slot slot, bool isOn)
     {
         // On Off 체크

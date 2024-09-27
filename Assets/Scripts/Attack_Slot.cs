@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Easing.Tweening;
 
 
 public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
@@ -24,6 +25,7 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     [SerializeField] private Image iconBorder;
     [SerializeField] private Image iconImage;
     [SerializeField] private Text speedText;
+    [SerializeField] private Image highlightImage;
 
 
     [Header("=== Attack Iine ===")]
@@ -31,9 +33,8 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     private GameObject lineTarget;
 
 
-    [Header("=== Attack Setting===")]
-    private int minDamage;
-    private int maxDamage;
+    [Header("=== Coroutine ===")]
+    private Coroutine highlightCoroutine;
 
 
     // 공격 셋팅 - Player 버전
@@ -46,6 +47,7 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         myAttack = attack;
         haveAttack = true;
     }
+
 
     // 공격 셋팅 - Enemy 버전
     public void Attack_Setting_Enemy(Attack_Slot targetSlot, Attack_Base attack)
@@ -61,27 +63,37 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         haveAttack = true;
     }
 
-    // 일방공격 or 합 상태가 되었을 때 표시 -> 이거 아직 미완
-    public void Attack_LineSetting(bool isOn, bool isEngage)
+
+    // 일방공격 or 합 상태가 되었을 때 표시 -> 이거 곡선 표시 해야함!
+    public void Attack_LineSetting(AttackType type, bool isOn, GameObject target)
     {
-        if (isOn)
+        if(isOn)
         {
             line.enabled = true;
-            if (isEngage)
-            {
-                lineTarget = targetSlot.gameObject;
-            }
-            else
-            {
+            line.SetPosition(0, transform.position);
 
+            switch (type)
+            {
+                case AttackType.None:
+                    break;
+
+                case AttackType.Oneside_Attack:
+                    line.SetPosition(1, target.transform.position);
+                    break;
+
+                case AttackType.Exchange_Attacks:
+                    line.SetPosition(1, target.transform.position);
+                    break;
             }
         }
         else
         {
-            lineTarget = null;
+            line.SetPosition(0, transform.position);
+            line.SetPosition(1, transform.position);
             line.enabled = false;
         }
     }
+
 
     // 슬롯 속도 셋팅
     public void Speed_Setting(int speed)
@@ -137,21 +149,84 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     // 전투 종료 후 슬롯 리셋
     public void ResetSlot()
     {
+        // 이펙트 리셋
+        Highlights_Effect(false);
+        if(targetSlot != null)
+        {
+            targetSlot.Highlights_Effect(false);
+        }
+
+
+        // 스테이터스 리셋
+        attackType = AttackType.None;
         haveAttack = false;
-        myAttack = null;
-        lineTarget = null;
         line.enabled = false;
+        myAttack = null;
+        targetSlot = null;
+        lineTarget = null;
+
+        // UI 리셋
+        iconImage.sprite = null;
+        speedText.text = "0";
     }
 
+
+    // 공격 선택 중 슬롯 빛나는 효과 호출
+    public void Highlights_Effect(bool isOn)
+    {
+        if(highlightCoroutine != null)
+        {
+            StopCoroutine(highlightCoroutine);
+        }
+
+        highlightCoroutine = StartCoroutine(HighLight(isOn));
+    }
+
+
+    // 공격 선택 중 슬롯 빛나는 효과 동작
+    private IEnumerator HighLight(bool isOn)
+    {
+        float start = 0;
+        float end = 0.5f;
+        float timer = 0;
+
+        if (isOn)
+        {
+            highlightImage.gameObject.SetActive(true);
+
+            while (timer < 1)
+            {
+                timer += Time.deltaTime;
+                highlightImage.color = new Color(highlightImage.color.r, highlightImage.color.g, highlightImage.color.b, Mathf.Lerp(start, end, EasingFunctions.OutExpo(timer)));
+                yield return null;
+            }
+        }
+        else
+        {
+            if(highlightImage.gameObject.activeSelf)
+            {
+                start = highlightImage.color.a;
+                end = 0;
+                while (timer < 1)
+                {
+                    timer += Time.deltaTime * 5f;
+                    highlightImage.color = new Color(highlightImage.color.r, highlightImage.color.g, highlightImage.color.b, Mathf.Lerp(start, end, EasingFunctions.OutExpo(timer)));
+                    yield return null;
+                }
+            }
+            highlightImage.gameObject.SetActive(false);
+        }
+    }
 
 
     #region 마우스 이벤트
     public void OnPointerEnter(PointerEventData eventData)
     {
+        Highlights_Effect(true);
+
         switch (slotType)
         {
             case SlotType.Player:
-                iconBorder.color = Color.gray;
                 switch (attackType)
                 {
                     case AttackType.None:
@@ -165,6 +240,7 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
                     case AttackType.Exchange_Attacks:
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, this, true);
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, targetSlot, true);
+                        targetSlot.Highlights_Effect(true);
                         break;
                 }
                 break;
@@ -192,10 +268,14 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        Highlights_Effect(false);
+
+        if(targetSlot != null)
+            targetSlot.Highlights_Effect(false);
+
         switch (slotType)
         {
             case SlotType.Player:
-                iconBorder.color = Color.white;
                 Player_UI.instance.Turn_EngageUI(Player_UI.Object.None, this, false);
                 break;
 
@@ -203,7 +283,6 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
                 Player_UI.instance.Turn_EngageUI(Player_UI.Object.None, this, false);
                 break;
         }
-
     }
 
     public void OnPointerClick(PointerEventData eventData)

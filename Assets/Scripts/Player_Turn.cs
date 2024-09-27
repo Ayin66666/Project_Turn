@@ -42,7 +42,7 @@ public class Player_Turn : MonoBehaviour
 
 
     [Header("=== Component ===")]
-    public Animator anim;
+    public Animator anim = null;
     private Coroutine curCoroutine;
 
 
@@ -100,17 +100,17 @@ public class Player_Turn : MonoBehaviour
         {
             return;
         }
-
         isSelect = true;
-        
+       
+
+        // 선택 UI On
+        Player_UI.instance.Turn_FightSelect(true);
+
         // 슬롯 정리 -> 남아있는 공격 있을 경우 대비
         for (int i = 0; i < attackSlot.Count; i++)
         {
             attackSlot[i].ResetSlot();
         }
-
-        // 선택 UI On
-        Player_UI.instance.Turn_FightSelect(true);
     }
 
 
@@ -160,6 +160,9 @@ public class Player_Turn : MonoBehaviour
         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, slot, true);
         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, enemyAttackList[enemyIndex], true);
 
+        // 슬롯 발광 효과
+        enemyAttackList[enemyIndex].Highlights_Effect(true);
+
         // 타겟 선택까지 대기
         while (!Input.GetKeyDown(KeyCode.Space))
         {
@@ -168,19 +171,27 @@ public class Player_Turn : MonoBehaviour
                 // 좌로 이동
                 if (Input.GetKeyDown(KeyCode.LeftArrow))
                 {
+                    enemyAttackList[enemyIndex].Highlights_Effect(false);
+
                     enemyIndex = (enemyIndex - 1 + enemyAttackList.Count) % enemyAttackList.Count;
                     Player_UI.instance.Turn_TargetSelect_DataSetting(true, enemyAttackList[enemyIndex].slotOwner.GetComponent<Enemy_Base>());
                     Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, slot, true);
                     Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, enemyAttackList[enemyIndex], true);
+
+                    enemyAttackList[enemyIndex].Highlights_Effect(true);
                 }
 
                 // 우로 이동
                 if (Input.GetKeyDown(KeyCode.RightArrow))
                 {
+                    enemyAttackList[enemyIndex].Highlights_Effect(false);
+
                     enemyIndex = (enemyIndex + 1) % enemyAttackList.Count;
                     Player_UI.instance.Turn_TargetSelect_DataSetting(true, enemyAttackList[enemyIndex].slotOwner.GetComponent<Enemy_Base>());
                     Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, slot, true);
                     Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, enemyAttackList[enemyIndex], true);
+
+                    enemyAttackList[enemyIndex].Highlights_Effect(true);
                 }
             }
 
@@ -194,7 +205,7 @@ public class Player_Turn : MonoBehaviour
         // 타겟 선택 UI Off
         Player_UI.instance.Turn_TargetSelect(false);
         Player_UI.instance.Turn_EngageUI(Player_UI.Object.None, slot, false);
-
+        enemyAttackList[enemyIndex].Highlights_Effect(false);
 
         // 전투 시작 체크
         Turn_FightButtonCheck();
@@ -246,8 +257,11 @@ public class Player_Turn : MonoBehaviour
     // 합 시작 애니매이션
     public void Turn_ExchangeStartAnim()
     {
-        anim.SetTrigger("Exchange");
-        anim.SetBool("isExchange", true);
+        if(anim != null)
+        {
+            anim.SetTrigger("Exchange");
+            anim.SetBool("isExchange", true);
+        }
     }
 
 
@@ -265,8 +279,12 @@ public class Player_Turn : MonoBehaviour
 
 
         // 애니메이션 대기 종료
-        anim.SetTrigger("Exchange");
-        anim.SetBool("isExchange", false);
+        if(anim != null)
+        {
+            anim.SetTrigger("Exchange");
+            anim.SetBool("isExchange", false);
+        }
+
 
 
         // 합 후 딜레이

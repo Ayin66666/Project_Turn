@@ -32,7 +32,7 @@ public class TurnFight_Manager : MonoBehaviour
     [Header("=== Attack Setting===")]
     [SerializeField] private List<Attack_Slot> playerAttacks;
     [SerializeField] private List<Attack_Slot> enemyAttacks;
-
+    [SerializeField] private List<Attack_Slot> combine;
     private Attack_Slot playerSlot;
     private Attack_Slot enemySlot;
     private Enemy_Base enemy;
@@ -57,6 +57,25 @@ public class TurnFight_Manager : MonoBehaviour
     // 이하 4 ~ 8 반복
 
 
+    // 플레이어 & 에너미 슬롯 데이터 받아오기
+    public void SlotData_Setting()
+    {
+        // 플레이어 슬롯 받아오기
+        for (int i = 0; i < Player_Manager.instnace.player_Turn.attackSlot.Count; i++)
+        {
+            playerAttacks.Add(Player_Manager.instnace.player_Turn.attackSlot[i]);
+        }
+
+        // 애너미 슬롯 받아오기
+        for (int i = 0; i < enemys.Count; i++)
+        {
+            for (int i2 = 0; i2 < enemys[i].attack_Slots.Count; i2++)
+            {
+                enemyAttacks.Add(enemys[i].attack_Slots[i2]);
+            }
+        }
+    }
+
 
     // 1 2 3 호출
     public void TurnFight_Start()
@@ -69,6 +88,7 @@ public class TurnFight_Manager : MonoBehaviour
     private IEnumerator TurnFight_StartCall() 
     {
         curTurn = Turn.Start;
+
 
         // 1. 페이드 연출 호출
         Player_UI.instance.TurnFight_Fade();
@@ -113,13 +133,17 @@ public class TurnFight_Manager : MonoBehaviour
     {
         curTurn = Turn.Select;
 
+
+        // 슬롯 데이터 받아오기
+        SlotData_Setting();
+
+
         // 4. 플레이어 스킬 선택
         Player_Manager.instnace.player_Turn.Turn_AttackSelect();
         while(Player_Manager.instnace.player_Turn.isSelect)
         {
             yield return null;
         }
-
 
         // 전투 시작
         StartCoroutine(Turn_Fight());
@@ -154,15 +178,11 @@ public class TurnFight_Manager : MonoBehaviour
         return enemyAttackList;
     }
 
-    // 전투 기능 동작
-    public void Turn_Fight_Call()
-    {
-        StartCoroutine(Turn_Fight());
-    }
 
     // 전투 기능 동작
     private IEnumerator Turn_Fight()
     {
+        Debug.Log("Call Turn Fight");
         curTurn = Turn.Fight;
 
 
@@ -174,11 +194,17 @@ public class TurnFight_Manager : MonoBehaviour
 
 
         // 플레이어 & 몬스터 슬롯 리스트를 하나로 합치는 기능
-        List<Attack_Slot> combine = new List<Attack_Slot>();
+        combine.Clear();
+        combine.AddRange(playerAttacks);
+        combine.AddRange(enemyAttacks);
 
 
         // 리스트의 값을 가장 빠른순부터 정렬
         combine.Sort((a, b) => b.slotSpeed.CompareTo(a.slotSpeed));
+        foreach(Attack_Slot obj in combine)
+        {
+            Debug.Log($"{obj}");
+        }
 
 
         // 공격 속도대로 순차적 공격
@@ -187,7 +213,7 @@ public class TurnFight_Manager : MonoBehaviour
             // 슬롯 셋팅 
             Turn_Player_Enemy_Setting(combine[i]);
 
-
+            Debug.Log("Call Turn Fight Attack Move" + combine[i]);
             // 6. 플레이어 - 몬스터 이동
             switch (combine[i].attackType)
             {
@@ -212,7 +238,7 @@ public class TurnFight_Manager : MonoBehaviour
                 yield return null;
             }
 
-
+            Debug.Log("Call Turn Fight Attack Exchanage" + combine[i]);
             // 7. 플레이어 - 몬스터 합 시작 애니메이션
             if (combine[i].attackType == Attack_Slot.AttackType.Exchange_Attacks)
             {
@@ -221,6 +247,7 @@ public class TurnFight_Manager : MonoBehaviour
                 yield return new WaitForSeconds(0.5f);
             }
 
+            Debug.Log("Call Turn Fight Attack Exchange Resuit" + combine[i]);
             // 7. 플레이어 - 몬스터 합 결과 값 & 결과 애니메이션
             // 공격 타입 별 동작
             switch (combine[i].attackType)
@@ -258,12 +285,13 @@ public class TurnFight_Manager : MonoBehaviour
                     break;
             }
 
-
+            Debug.Log("Call Turn Fight Attack Delay" + combine[i]);
             // 다음 공격까지의 잠시 대기
             yield return new WaitForSeconds(nextAttackDelay);
         }
 
 
+        Debug.Log("Call Turn Fight Attack End");
         // 8. 플레이어 - 몬스터 원위치
         Turn_ReturnPos();
     }
@@ -388,6 +416,7 @@ public class TurnFight_Manager : MonoBehaviour
         StartCoroutine(Turn_Attack((playerCount == 0 ? Object.Enemy : Object.Player), (playerCount == 0 ? enemySlot : playerSlot)));
     }
 
+
     // 합 승리 & 일방공격 호출
     private IEnumerator Turn_Attack(Object win, Attack_Slot slot)
     {
@@ -418,6 +447,7 @@ public class TurnFight_Manager : MonoBehaviour
 
         isAttack = false;
     }
+
 
     // 8. 플레이어 - 몬스터 원위치
     private void Turn_ReturnPos()
