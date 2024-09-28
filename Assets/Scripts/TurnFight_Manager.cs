@@ -12,7 +12,6 @@ public class TurnFight_Manager : MonoBehaviour
     private bool isExchange;
     private bool isAttack;
 
-
     private enum Turn { Await, Start, Select, Fight, End }
     private enum ExchangeType { OneSide, Exchange }
     private enum Object { Player, Enemy }
@@ -179,7 +178,7 @@ public class TurnFight_Manager : MonoBehaviour
     }
 
 
-    // 전투 기능 동작
+    // 전투 기능 동작 ( 5, 6, 7, 8 )
     private IEnumerator Turn_Fight()
     {
         Debug.Log("Call Turn Fight");
@@ -458,4 +457,71 @@ public class TurnFight_Manager : MonoBehaviour
             enemys[i].transform.position = enemyReturnPos[i].position;
         }
     }
+
+
+    // 전투 종료 체크
+    private void Turn_StageCheck()
+    {
+
+    }
+
+
+    // 전투 승리 호출
+    private void Turn_FightWin()
+    {
+        StartCoroutine(TurnFightEndCall());
+    }
+
+
+    // 전투 승리 동작
+    private IEnumerator TurnFightEndCall()
+    {
+        curTurn = Turn.End;
+
+        // 전투 종료 애니메이션 호출
+        Player_Manager.instnace.player_Turn.Turn_End(Player_Turn.EndType.Win);
+        while (Player_Manager.instnace.player_Turn.isEndAnim)
+        {
+            yield return null;
+        }
+
+        // 전투 종료 UI 호출
+        Player_UI.instance.TurnFight_End();
+        while(Player_UI.instance.isFade)
+        {
+            yield return null;
+        }
+
+        // 플레이어 원위치
+        Player_Manager.instnace.Turn_Fight_End();
+
+        // 매니저 파괴
+        Destroy(gameObject);
+    }
+
+
+    // 전투 패배 호출
+    private void Turn_FightLose()
+    {
+        StartCoroutine(TurnFightLoseCall());
+    }
+
+
+    // 전투 패배 동작
+    private IEnumerator TurnFightLoseCall()
+    {
+        curTurn = Turn.End;
+
+        // 전투 종료 애니메이션 호출
+        Player_Manager.instnace.player_Turn.Turn_End(Player_Turn.EndType.Lose);
+        while(Player_Manager.instnace.player_Turn.isEndAnim)
+        {
+            yield return null;
+        }
+
+        // 전투 종료 UI 호출 -> 이거 일단 승리꺼 넣어둠!
+        Player_UI.instance.TurnFight_End();
+
+        // 
+    } // -> 미완성
 }

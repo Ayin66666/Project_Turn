@@ -1,7 +1,7 @@
+using Easing.Tweening;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Easing.Tweening;
 
 
 public class Player_Turn : MonoBehaviour
@@ -28,17 +28,18 @@ public class Player_Turn : MonoBehaviour
     public bool isSelect;
     public bool isExchangeMove;
     public bool isRecoilMove;
-    private bool isExchangeTargetSelect;
+    public bool isExchangeTargetSelect;
+    public bool isEndAnim;
 
     public enum ExchangeResuit { Win, Draw, Lose }
-
+    public enum EndType { Win, Lose }
 
     [Header("=== Attack Setting ===")]
     public List<Attack_Slot> attackSlot;
 
 
     [Header("=== Pos Setting ===")]
-    [SerializeField] private Transform[] recoilPos;
+    [SerializeField] private Transform[] exchange_RecoilPos;
 
 
     [Header("=== Component ===")]
@@ -156,6 +157,7 @@ public class Player_Turn : MonoBehaviour
         enemyIndex = 0;
         Player_UI.instance.Turn_TargetSelect_DataSetting(true, enemyAttackList[enemyIndex].slotOwner.GetComponent<Enemy_Base>());
         Player_UI.instance.Turn_TargetSelect(true);
+        slot.Attack_LineSetting(true, enemyAttackList[enemyIndex].gameObject);
 
         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, slot, true);
         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, enemyAttackList[enemyIndex], true);
@@ -178,6 +180,7 @@ public class Player_Turn : MonoBehaviour
                     Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, slot, true);
                     Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, enemyAttackList[enemyIndex], true);
 
+                    slot.Attack_LineSetting(true, enemyAttackList[enemyIndex].gameObject);
                     enemyAttackList[enemyIndex].Highlights_Effect(true);
                 }
 
@@ -191,6 +194,7 @@ public class Player_Turn : MonoBehaviour
                     Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, slot, true);
                     Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, enemyAttackList[enemyIndex], true);
 
+                    slot.Attack_LineSetting(true, enemyAttackList[enemyIndex].gameObject);
                     enemyAttackList[enemyIndex].Highlights_Effect(true);
                 }
             }
@@ -205,6 +209,7 @@ public class Player_Turn : MonoBehaviour
         // 타겟 선택 UI Off
         Player_UI.instance.Turn_TargetSelect(false);
         Player_UI.instance.Turn_EngageUI(Player_UI.Object.None, slot, false);
+        slot.Attack_LineSetting(false, null);
         enemyAttackList[enemyIndex].Highlights_Effect(false);
 
         // 전투 시작 체크
@@ -339,7 +344,7 @@ public class Player_Turn : MonoBehaviour
 
         // Recoil Move
         Vector3 startPos = transform.position;
-        Vector3 endPos = recoilPos[type == ExchangeResuit.Win ? 0 : (type == ExchangeResuit.Draw ? 1 : 2)].position;
+        Vector3 endPos = exchange_RecoilPos[type == ExchangeResuit.Win ? 0 : (type == ExchangeResuit.Draw ? 1 : 2)].position;
         float timer = 0;
         while(timer < 1)
         {
@@ -363,20 +368,38 @@ public class Player_Turn : MonoBehaviour
 
 
     // 맨 마지막 전투 종료 할 때 호출 -> 승리/사망 모션 같은거
-    public void Turn_End()
+    public void Turn_End(EndType type)
     {
-        StartCoroutine(Turn_EndCall());
+        StartCoroutine(Turn_EndCall(type));
     }
 
 
     // 애니메이션 -> 아직 애니메이션 이후 기능 안만듬!
-    private IEnumerator Turn_EndCall()
+    private IEnumerator Turn_EndCall(EndType type)
     {
-        anim.SetTrigger("TurnEnd");
-        anim.SetBool("isTurnEndAnim", true);
-        while(anim.GetBool("isTurnEndAnim"))
+        isEndAnim = true;
+
+        switch (type)
         {
-            yield return null;
+            case EndType.Win:
+                anim.SetTrigger("TurnEnd");
+                anim.SetBool("isTurnEndWinAnim", true);
+                while (anim.GetBool("isTurnEndWinAnim"))
+                {
+                    yield return null;
+                }
+                break;
+
+            case EndType.Lose:
+                anim.SetTrigger("TurnEnd");
+                anim.SetBool("isTurnEndLoseAnim", true);
+                while (anim.GetBool("isTurnEndLoseAnim"))
+                {
+                    yield return null;
+                }
+                break;
         }
+
+        isEndAnim = false;
     }
 }

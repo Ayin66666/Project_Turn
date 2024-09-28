@@ -22,6 +22,7 @@ public class Player_Manager : MonoBehaviour
     public Player_UI player_UI;
     public TurnFight_Manager turnManger = null;
 
+
     [Header("=== State ===")]
     public State state;
     public bool isAttack;

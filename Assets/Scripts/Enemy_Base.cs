@@ -185,8 +185,11 @@ public abstract class Enemy_Base : MonoBehaviour
     // 합 시작 애니매이션
     public void Turn_ExchangeStartAnim()
     {
-        anim.SetTrigger("Exchange");
-        anim.SetBool("isExchange", true);
+        if(anim != null)
+        {
+            anim.SetTrigger("Exchange");
+            anim.SetBool("isExchange", true);
+        }
     }
 
 

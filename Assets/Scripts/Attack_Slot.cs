@@ -31,6 +31,8 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     [Header("=== Attack Iine ===")]
     [SerializeField] private LineRenderer line = null;
     private GameObject lineTarget;
+    public int curveResolution = 20; // 곡선의 해상도 (포인트 개수)
+    public float curveHeight = 2.0f; // 곡선의 최대 높이 (곡률)
 
 
     [Header("=== Coroutine ===")]
@@ -61,37 +63,6 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         iconImage.sprite = attack.icon;
         myAttack = attack;
         haveAttack = true;
-    }
-
-
-    // 일방공격 or 합 상태가 되었을 때 표시 -> 이거 곡선 표시 해야함!
-    public void Attack_LineSetting(AttackType type, bool isOn, GameObject target)
-    {
-        if(isOn)
-        {
-            line.enabled = true;
-            line.SetPosition(0, transform.position);
-
-            switch (type)
-            {
-                case AttackType.None:
-                    break;
-
-                case AttackType.Oneside_Attack:
-                    line.SetPosition(1, target.transform.position);
-                    break;
-
-                case AttackType.Exchange_Attacks:
-                    line.SetPosition(1, target.transform.position);
-                    break;
-            }
-        }
-        else
-        {
-            line.SetPosition(0, transform.position);
-            line.SetPosition(1, transform.position);
-            line.enabled = false;
-        }
     }
 
 
@@ -171,6 +142,38 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     }
 
 
+    // 일방공격 or 합 상태가 되었을 때 표시 -> 이거 곡선 표시 해야함!
+    public void Attack_LineSetting(bool isOn, GameObject target)
+    {
+        if (isOn)
+        {
+            line.enabled = true;
+            line.positionCount = curveResolution;
+            Vector3 startPoint = transform.position;
+            Vector3 endPoint = target.transform.position;
+            Vector3 controlPoint = (startPoint + endPoint) / 2 + Vector3.up * curveHeight; // 슬라이더에 따라 곡률 변경
+
+            for (int i = 0; i < curveResolution; i++)
+            {
+                float t = i / (float)(curveResolution - 1);
+                Vector3 curvePoint = CalculateQuadraticBezierPoint(t, startPoint, controlPoint, endPoint);
+                line.SetPosition(i, curvePoint);
+            }
+        }
+        else
+        {
+            line.positionCount = 0;
+            line.enabled = false;
+        }
+    }
+
+    Vector3 CalculateQuadraticBezierPoint(float t, Vector3 p0, Vector3 p1, Vector3 p2)
+    {
+        float u = 1 - t;
+        return u * u * p0 + 2 * u * t * p1 + t * t * p2;
+    }
+
+
     // 공격 선택 중 슬롯 빛나는 효과 호출
     public void Highlights_Effect(bool isOn)
     {
@@ -222,6 +225,11 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     #region 마우스 이벤트
     public void OnPointerEnter(PointerEventData eventData)
     {
+        if (Player_Manager.instnace.player_Turn.isExchangeTargetSelect)
+        {
+            return;
+        }
+
         Highlights_Effect(true);
 
         switch (slotType)
@@ -230,16 +238,18 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
                 switch (attackType)
                 {
                     case AttackType.None:
-                        Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, this, true);
+                        // Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, this, true);
                         break;
 
                     case AttackType.Oneside_Attack:
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, this, true);
+                        Attack_LineSetting(true, targetSlot.gameObject);
                         break;
 
                     case AttackType.Exchange_Attacks:
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, this, true);
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, targetSlot, true);
+                        Attack_LineSetting(true, targetSlot.gameObject);
                         targetSlot.Highlights_Effect(true);
                         break;
                 }
@@ -249,16 +259,19 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
                 switch (attackType)
                 {
                     case AttackType.None:
-                        Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, this, true);
+                        // Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, this, true);
                         break;
 
                     case AttackType.Oneside_Attack:
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, this, true);
+                        Attack_LineSetting(true, targetSlot.gameObject);
                         break;
 
                     case AttackType.Exchange_Attacks:
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, this, true);
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, targetSlot, true);
+                        Attack_LineSetting(true, targetSlot.gameObject);
+                        targetSlot.Highlights_Effect(true);
                         break;
                 }
                 break;
@@ -268,9 +281,14 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        Highlights_Effect(false);
+        if(Player_Manager.instnace.player_Turn.isExchangeTargetSelect)
+        {
+            return;
+        }
 
-        if(targetSlot != null)
+        Attack_LineSetting(false, null);
+        Highlights_Effect(false);
+        if (targetSlot != null)
             targetSlot.Highlights_Effect(false);
 
         switch (slotType)
@@ -287,6 +305,11 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        if (Player_Manager.instnace.player_Turn.isExchangeTargetSelect)
+        {
+            return;
+        }
+
         switch (slotType)
         {
             case SlotType.Player:

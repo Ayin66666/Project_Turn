@@ -1,9 +1,8 @@
 using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.Rendering.Universal; // 이거 있어야 마테리얼 쪽 만져서 효과 on/off 가능한듯?
+using Easing.Tweening;
+// using UnityEngine.UIElements; // 이거 있어야 마테리얼 쪽 만져서 효과 on/off 가능한듯?
 
 public class Player_UI : MonoBehaviour
 {
@@ -76,6 +75,7 @@ public class Player_UI : MonoBehaviour
 
     // 합 UI
     [Header("=== Turn Fight Exchange UI ===")]
+
     // 일방 - 합 공격 표시 UI
     [SerializeField] private GameObject exchangeSet;
     [SerializeField] private Text exchangeText;
@@ -92,6 +92,12 @@ public class Player_UI : MonoBehaviour
     [SerializeField] private Text exchange_eAttackNameText;
     [SerializeField] private Text exchange_edamageText;
     [SerializeField] private Text exchange_eDescriptionText;
+
+
+    // 전투 승리 & 패배 UI
+    [Header("=== Turn Fight Win & Lose UI ===")]
+    [SerializeField] private GameObject endUISet;
+    [SerializeField] private CanvasGroup endUIcanvasGroup;
 
 
     // 변경 사항
@@ -117,7 +123,7 @@ public class Player_UI : MonoBehaviour
         // Fade 테스트용
         if (Input.GetKeyDown(KeyCode.V))
         {
-            TurnFight_Fade();
+            TurnFight_End();
         }
 
         Option();
@@ -430,6 +436,69 @@ public class Player_UI : MonoBehaviour
         yield return new WaitForSeconds(0.15f);
 
         isFade = false;
+    }
+
+
+    // 전투 종료 UI 호출
+    public void TurnFight_End()
+    {
+        StartCoroutine(TurnFightEndCall());
+    }
+
+
+    // 전투 종료 UI 동작
+    private IEnumerator TurnFightEndCall()
+    {
+        isFade = true;
+
+        // 텍스트 페이드 인
+        endUISet.SetActive(true);
+        float timer = 0;
+        while(timer < 1)
+        {
+            timer += Time.deltaTime * 1.5f;
+            endUIcanvasGroup.alpha = EasingFunctions.OutExpo(timer);
+            yield return null;
+        }
+
+        // 딜레이
+        yield return new WaitForSeconds(0.5f);
+
+
+        // 텍스트 페이드 아웃
+        timer = 1;
+        while(timer > 0)
+        {
+            timer -= Time.deltaTime * 1.5f;
+            endUIcanvasGroup.alpha = EasingFunctions.OutExpo(timer);
+            yield return null;
+        }
+        endUISet.SetActive(false);
+
+
+        // 화면 페이드 인
+        fadeSet.SetActive(true);
+        timer = 0;
+        while(timer < 1)
+        {
+            timer += Time.deltaTime * 1.5f;
+            fadeImage.color = new Color(fadeImage.color.r, fadeImage.color.g, fadeImage.color.b, EasingFunctions.OutExpo(timer));
+            yield return null;
+        }
+
+        // 딜레이
+        yield return new WaitForSeconds(0.5f);
+
+        // 플레이어 원위치
+
+        // 화면 페이드 아웃
+        timer = 1;
+        while(timer > 0)
+        {
+            timer -= Time.deltaTime * 1.5f;
+            fadeImage.color = new Color(fadeImage.color.r, fadeImage.color.g, fadeImage.color.b, EasingFunctions.OutExpo(timer));
+            yield return null;
+        }
     }
 
     #endregion

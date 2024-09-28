@@ -24,7 +24,6 @@ public class Player_World : MonoBehaviour
 
     [Header("=== Component ===")]
     [SerializeField] private CharacterController controller;
-    [SerializeField] private TrailRenderer trail;
 
 
     private void OnEnable()
