@@ -13,17 +13,25 @@ public class Player_UI : MonoBehaviour
     public bool isFade;
 
     // 여기 두개 불값으로 옵션창 켜진거 확인 & 옵션창에서 나가기 버튼 누른건지 확인
+    public bool isMenuOn;
+    public bool isWeapon_ItemOn;
+    public bool isSkillOn;
     public bool isOptionOn;
     public bool isExitOn;
-
+    public bool isFpsOn;
     public enum Object { None, Player, Enemy }
+
 
     // (장비, 인벤, 스킬, 옵션) 창
     [Header("=== Option UI ===")]
+    [SerializeField] private GameObject menuSet;
+    [SerializeField] private GameObject weaponItemSet;
     [SerializeField] private GameObject optionSet;
-    [SerializeField] private GameObject waponItemSet;
     [SerializeField] private GameObject skillSet;
     [SerializeField] private GameObject exitSet;
+    [SerializeField] private Toggle fpsToggle;
+
+    private float deltaTime = 0f;
 
 
     // 체력바 F & B
@@ -54,6 +62,7 @@ public class Player_UI : MonoBehaviour
     [SerializeField] private Slider undersideSlider;
     [SerializeField] private GameObject undersideButton;
     private Coroutine gaugeCoroutine;
+
 
     // 월드 <-> 턴제 이동 Fade UI
     [Header("=== Fade UI ===")]
@@ -137,10 +146,10 @@ public class Player_UI : MonoBehaviour
             TurnFight_Lose();
         }
 
-        Option();
+        Menu();
 
-        // HP 테스트용
-       //    Hp();
+        //FPS 표시 및 설정용
+        deltaTime += (Time.unscaledDeltaTime - deltaTime) * 0.1f;
     }
 
     // 이쪽만 작업하면 됨
@@ -209,6 +218,116 @@ public class Player_UI : MonoBehaviour
             skillDescriptionSet.SetActive(isOn);
         }
     }
+
+    public void Menu()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (!isMenuOn)
+            {
+                isMenuOn = true;
+                menuSet.SetActive(true);
+            }
+            else
+            {
+                isMenuOn = false;
+                menuSet.SetActive(false);
+            }
+        }
+    }
+
+    public void Menu_Click_Exit()
+    {
+        isExitOn = true;
+        exitSet.SetActive(true);
+    }
+
+    public void Menu_Click_ExitOff()
+    {
+        isExitOn = false;
+        exitSet.SetActive(false);
+    }
+
+    public void Menu_Click_Option()
+    {
+        isOptionOn = true;
+        optionSet.SetActive(true);
+    }
+
+    public void Menu_Click_Skill()
+    {
+        isSkillOn = true;
+        skillSet.SetActive(true);
+    }
+
+    public void Menu_Click_Weapon_Item()
+    {
+        isWeapon_ItemOn = true;
+        weaponItemSet.SetActive(true);
+    }
+
+    public void Weapon_ItemOff()
+    {
+        isWeapon_ItemOn = false;
+        weaponItemSet.SetActive(false);
+    }
+
+    public void SkillOff()
+    {
+        isSkillOn = false;
+        skillSet.SetActive(false);
+    }
+
+    public void OptionOff()
+    {
+        isOptionOn = false;
+        optionSet.SetActive(false);
+    }
+
+    public void FpsOn()
+    {
+        // 작업중
+        if (fpsToggle.isOn)
+        {
+            isFpsOn = true;
+        }
+        else
+        {
+            isFpsOn = false;
+        }
+    }
+
+    private void OnGUI()
+    {
+        if (isFpsOn)
+        {
+            GUIStyle style = new GUIStyle();
+
+            Rect rect = new Rect(30, 30, Screen.width, Screen.height);
+            style.alignment = TextAnchor.UpperLeft;
+            style.fontSize = 25;
+            style.normal.textColor = Color.red;
+
+            float ms = deltaTime * 1000f;
+            float fps = 1.0f / deltaTime;
+            string text = string.Format("{0:0.} FPS ({1:0.0} ms)", fps, ms);
+
+            GUI.Label(rect, text, style);
+        }
+        else
+        {
+            return;
+        }
+    }
+
+    public void Exit_Game()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
+    }
     #endregion
 
 
@@ -220,6 +339,15 @@ public class Player_UI : MonoBehaviour
     {
         selectListSet.SetActive(isOn);
         attackSlotSet.SetActive(isOn);
+    }
+
+    // 슬롯 UI 호출 & 동작 -> 여기부터 작업!
+    public void Turn_SlotSpeed()
+    {
+        for (int i = 0; i < Player_Manager.instnace.player_Turn.attackSlot.Count; i++)
+        {
+
+        }
     }
 
     // 어택 포인트 UI 호출 & 동작
@@ -548,7 +676,6 @@ public class Player_UI : MonoBehaviour
             yield return null;
         }
     }
-
 
 
 

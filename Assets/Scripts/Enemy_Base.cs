@@ -205,8 +205,11 @@ public abstract class Enemy_Base : MonoBehaviour
     {
         isRecoilMove = true;
 
-        anim.SetTrigger("Attack");
-        anim.SetBool("EngageAnim", true);
+        if(anim != null)
+        {
+            anim.SetTrigger("Attack");
+            anim.SetBool("EngageAnim", true);
+        }
 
         // Delay
         yield return new WaitForSeconds(Random.Range(0.5f, 1f));
@@ -215,32 +218,36 @@ public abstract class Enemy_Base : MonoBehaviour
         StartCoroutine(Turn_ExchangeResuitMoveCall(type));
 
         // Win & Lose Animation
-        switch (type)
+        if(anim != null)
         {
-            case ExchangeResuit.Win:
-                anim.SetBool("EngageWin", true);
-                while (anim.GetBool("EngageWin"))
-                {
-                    yield return null;
-                }
-                break;
+            switch (type)
+            {
+                case ExchangeResuit.Win:
+                    anim.SetBool("EngageWin", true);
+                    while (anim.GetBool("EngageWin"))
+                    {
+                        yield return null;
+                    }
+                    break;
 
-            case ExchangeResuit.Draw:
-                anim.SetBool("EngageDraw", true);
-                while (anim.GetBool("EngageDraw"))
-                {
-                    yield return null;
-                }
-                break;
+                case ExchangeResuit.Draw:
+                    anim.SetBool("EngageDraw", true);
+                    while (anim.GetBool("EngageDraw"))
+                    {
+                        yield return null;
+                    }
+                    break;
 
-            case ExchangeResuit.Lose:
-                anim.SetBool("EngageLose", true);
-                while (anim.GetBool("EngageLose"))
-                {
-                    yield return null;
-                }
-                break;
+                case ExchangeResuit.Lose:
+                    anim.SetBool("EngageLose", true);
+                    while (anim.GetBool("EngageLose"))
+                    {
+                        yield return null;
+                    }
+                    break;
+            }
         }
+
 
         // Delay
         yield return new WaitForSeconds(Random.Range(0.25f, 0.55f));

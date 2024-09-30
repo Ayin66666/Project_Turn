@@ -5,7 +5,6 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Easing.Tweening;
 
-
 public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     [Header("=== Slot Setting ===")]
@@ -56,13 +55,21 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     {
         Debug.Log("call Enemy attack Setting");
 
-        // 타겟 셋팅
-        Attack_TargetSetting(targetSlot);
+        if(attack != null)
+        {
+            // 타겟 셋팅
+            Attack_TargetSetting(targetSlot);
 
-        // 공격 슬롯 UI 삽입
-        iconImage.sprite = attack.icon;
-        myAttack = attack;
-        haveAttack = true;
+            // 공격 슬롯 UI 삽입
+            iconImage.sprite = attack.icon;
+            myAttack = attack;
+            haveAttack = true;
+        }
+        else
+        {
+            Debug.Log("공격 없음!");
+            attackType = AttackType.None;
+        }
     }
 
 
@@ -85,6 +92,13 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
                 // 속도에 따른 합 & 일방 공격 상태 설정
                 if (slotSpeed >= targetSlot.slotSpeed)
                 {
+                    // 만약 내가 선택한 공격에 이미 합을 하는 공격이 있다면
+                    if(targetSlot.targetSlot != null)
+                    {
+                        // 해당 공격의 상태를 일방 공격으로 변경
+                        target.targetSlot.attackType = AttackType.Oneside_Attack;
+                    }
+
                     attackType = AttackType.Exchange_Attacks;
                     target.Attack_TargetSetting(this);
                 }
@@ -96,7 +110,7 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
             case SlotType.Enemy:
                 // 몬스터는 무조건 먼저 공격을 셋팅하니 무조건 일방임!
-                if(targetSlot.myAttack != null)
+                if(targetSlot.myAttack == null)
                 {
                     attackType = AttackType.Oneside_Attack;
                 }

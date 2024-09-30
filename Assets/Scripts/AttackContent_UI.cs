@@ -71,6 +71,11 @@ public class AttackContent_UI : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
     public void OnPointerClick(PointerEventData eventData)
     {
+       if(Player_Manager.instnace.player_Turn.isExchangeTargetSelect)
+        {
+            return;
+        }
+
         Player_Manager.instnace.player_Turn.Slot_AttackSetting(myAttack);
         Debug.Log("Click");
     }

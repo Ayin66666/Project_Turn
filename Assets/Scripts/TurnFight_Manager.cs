@@ -132,13 +132,22 @@ public class TurnFight_Manager : MonoBehaviour
     {
         curTurn = Turn.Select;
 
+        // 4. 플레이어 스킬 선택
+        Player_Manager.instnace.player_Turn.Turn_AttackSelect();
+
+        // 플레이어 슬롯 스피드 셋팅
+        Player_Manager.instnace.player_Turn.Slot_SpeedSetting();
+
+        // 에너미 공격 셋팅
+        for (int i = 0;i < enemys.Count;i++)
+        {
+            enemys[i].Turn_AttackSetting();
+        }
 
         // 슬롯 데이터 받아오기
         SlotData_Setting();
 
-
-        // 4. 플레이어 스킬 선택
-        Player_Manager.instnace.player_Turn.Turn_AttackSelect();
+        // 선택 완료까지 대기
         while(Player_Manager.instnace.player_Turn.isSelect)
         {
             yield return null;
@@ -218,6 +227,7 @@ public class TurnFight_Manager : MonoBehaviour
             {
                 // 공격 없을 경우
                 case Attack_Slot.AttackType.None:
+                    Debug.Log("No Attack / " + combine[i]);
                     break;
 
                 // 플레이어 - 몬스터 이동 (일방 공격)

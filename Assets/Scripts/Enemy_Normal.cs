@@ -7,7 +7,7 @@ public class Enemy_Normal : Enemy_Base
 {
     // 노말 몬스터 셋팅
 
-    // 1. 스킬의 경우 0번은 대기, 마지막은 특수 공격
+    // 1. 스킬 리스트의 마지막은 특수 공격
     // 2. 4턴마다 강공격 사용
     // 3. 스킬 사이클 5종류 중 가중치 랜덤 셋팅 (일반 3종 / 차지 2종)
 
@@ -58,8 +58,13 @@ public class Enemy_Normal : Enemy_Base
         }
         else
         {
+            attack_Slots[0].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[1]);
+            attack_Slots[1].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[1]);
+            attack_Slots[2].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[1]);
+
+            /*
             // 특수 공격 조건 체크
-            if(curAttackCount >= chargedAttackCount)
+            if (curAttackCount >= chargedAttackCount)
             {
                 // 차지 공격
                 Attack_Weight(PatternType.Charged);
@@ -69,6 +74,7 @@ public class Enemy_Normal : Enemy_Base
                 // 일반 공격
                 Attack_Weight(PatternType.Normal);
             }
+            */
         }
     }
 
@@ -154,9 +160,9 @@ public class Enemy_Normal : Enemy_Base
         curPattern = AttackPattern.None;
 
         // 공격 셋팅
-        attack_Slots[0].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[0]);
-        attack_Slots[1].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[0]);
-        attack_Slots[2].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[0]);
+        attack_Slots[0].Attack_Setting_Enemy(Trun_TargetSetting(), null);
+        attack_Slots[1].Attack_Setting_Enemy(Trun_TargetSetting(), null);
+        attack_Slots[2].Attack_Setting_Enemy(Trun_TargetSetting(), null);
     }
 
     // 일반공격 패턴 1

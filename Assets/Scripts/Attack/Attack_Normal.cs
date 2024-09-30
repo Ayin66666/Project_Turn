@@ -34,7 +34,7 @@ public class Attack_Normal : Attack_Base
 
     private IEnumerator Attack()
     {
-
+        Debug.Log("공격했음!!!!");
 
         yield return null;
     }

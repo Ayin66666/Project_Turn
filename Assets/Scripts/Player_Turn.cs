@@ -92,6 +92,8 @@ public class Player_Turn : MonoBehaviour
             int ran = Random.Range(Player_Manager.instnace.SlotSpeed.x, Player_Manager.instnace.SlotSpeed.y);
             attackSlot[i].Speed_Setting(ran);
         }
+
+        // Player_UI.instance();
     }
 
 
@@ -204,12 +206,14 @@ public class Player_Turn : MonoBehaviour
 
         // 타겟 셋팅
         slot.Attack_TargetSetting(enemyAttackList[enemyIndex]);
+        enemyAttackList[enemyIndex].Attack_TargetSetting(slot);
 
         // 타겟 선택 UI Off
         Player_UI.instance.Turn_TargetSelect(false);
         Player_UI.instance.Turn_EngageUI(Player_UI.Object.None, slot, false);
         slot.Attack_LineSetting(false, null);
         enemyAttackList[enemyIndex].Highlights_Effect(false);
+        isExchangeTargetSelect = false;
 
         // 전투 시작 체크
         Turn_FightButtonCheck();
@@ -297,31 +301,34 @@ public class Player_Turn : MonoBehaviour
         StartCoroutine(Turn_ExchanageResuitMove(type));
 
         // 합 애니메이션
-        switch (type)
+        if(anim != null)
         {
-            case ExchangeResuit.Win:
-                anim.SetBool("EngageWin", true);
-                while (anim.GetBool("EngageWin"))
-                {
-                    yield return null;
-                }
-                break;
+            switch (type)
+            {
+                case ExchangeResuit.Win:
+                    anim.SetBool("EngageWin", true);
+                    while (anim.GetBool("EngageWin"))
+                    {
+                        yield return null;
+                    }
+                    break;
 
-            case ExchangeResuit.Draw:
-                anim.SetBool("EngageDraw", true);
-                while (anim.GetBool("EngageDraw"))
-                {
-                    yield return null;
-                }
-                break;
+                case ExchangeResuit.Draw:
+                    anim.SetBool("EngageDraw", true);
+                    while (anim.GetBool("EngageDraw"))
+                    {
+                        yield return null;
+                    }
+                    break;
 
-            case ExchangeResuit.Lose:
-                anim.SetBool("EngageLose", true);
-                while (anim.GetBool("EngageLose"))
-                {
-                    yield return null;
-                }
-                break;
+                case ExchangeResuit.Lose:
+                    anim.SetBool("EngageLose", true);
+                    while (anim.GetBool("EngageLose"))
+                    {
+                        yield return null;
+                    }
+                    break;
+            }
         }
 
         // 밀림 이후 대기
