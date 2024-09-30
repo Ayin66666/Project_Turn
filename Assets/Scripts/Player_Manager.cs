@@ -33,8 +33,8 @@ public class Player_Manager : MonoBehaviour
     [Header("=== Status ===")]
     public int maxHp;
     public int curHp;
-    [SerializeField] private int physicalDefense;
-    [SerializeField] private int magicalDefense;
+    [SerializeField] private float physicalDefense;
+    [SerializeField] private float magicalDefense;
 
     [SerializeField] private int physicalDamage;
     [SerializeField] private int magcialDamage;
@@ -47,12 +47,12 @@ public class Player_Manager : MonoBehaviour
   
     
     #region Property
-    public int PhysicalDefense
+    public float PhysicalDefense
     {
         get { return physicalDefense; }
         private set { physicalDefense = value; }
     }
-    public int MagicDefense
+    public float MagicDefense
     {
         get { return magicalDefense; }
         private set { magicalDefense = value; }
@@ -114,6 +114,9 @@ public class Player_Manager : MonoBehaviour
         // 물 & 마 데미지 인풋
         int baseDamage = attack.damageType[count] == Attack_Base.DamageType.physical ? physicalDamage : magcialDamage;
 
+        // 버프 계산
+
+
         // 공격 배율 계산
         float valueDamage = baseDamage * Random.Range(attack.damageValue[count].x, baseDamage * attack.damageValue[count].y);
 
@@ -128,38 +131,46 @@ public class Player_Manager : MonoBehaviour
 
     public void Take_Damage(int damage, DamageType type)
     {
+        // 사망 체크
         if(isDie)
         {
             return;
         }
 
+        // 데미지 타입 체크
         switch (type)
         {
             case DamageType.physical:
-                curHp -= damage * physicalDefense;
+                curHp -= (int)(damage * physicalDefense);
                 break;
 
             case DamageType.magical:
-                curHp -= damage * magicalDefense;
+                curHp -= (int)(damage * magicalDefense);
                 break;
         }
 
+        // 사망 체크
         if(curHp <= 0)
         {
-            
+            player_Turn.Turn_End(Player_Turn.EndType.Lose);
         }
     }
 
+
+    // 전투 시작 이동 & 턴제 플레이어 On
     public void Turn_Fight_Start(Transform movePos, TurnFight_Manager manager)
     {
         turnManger = manager;
-        // player_Turn.gameObject.transform.position = movePos.position;
+        player_Turn.gameObject.transform.position = movePos.position;
         player_World.gameObject.SetActive(false);
         player_Turn.gameObject.SetActive(true);
     }
 
+
+    // 전투 종료 이동 & 월드 플레이어 On
     public void Turn_Fight_End()
     {
-
+        player_World.gameObject.SetActive(true);
+        player_Turn.gameObject.SetActive(false);
     }
 }

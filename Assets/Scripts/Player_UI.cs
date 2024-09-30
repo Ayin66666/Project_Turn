@@ -1,12 +1,13 @@
+using Easing.Tweening;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
-using Easing.Tweening;
 // using UnityEngine.UIElements; // 이거 있어야 마테리얼 쪽 만져서 효과 on/off 가능한듯?
 
 public class Player_UI : MonoBehaviour
 {
     public static Player_UI instance;
+
 
     [Header("=== UI State ===")]
     public bool isFade;
@@ -41,11 +42,18 @@ public class Player_UI : MonoBehaviour
     [SerializeField] private Text skillDescriptionText;
 
 
-    // 전투 자원
+    // 공격 포인트 UI
     [Header("=== Attack Point UI ===")]
     [SerializeField] private GameObject attackPointSet;
     [SerializeField] private GameObject[] pointImage;
 
+
+    // 이면 게이지 & 버튼 UI
+    [Header("=== Underside Gauge UI ===")]
+    [SerializeField] private GameObject undersideSet;
+    [SerializeField] private Slider undersideSlider;
+    [SerializeField] private GameObject undersideButton;
+    private Coroutine gaugeCoroutine;
 
     // 월드 <-> 턴제 이동 Fade UI
     [Header("=== Fade UI ===")]
@@ -75,18 +83,20 @@ public class Player_UI : MonoBehaviour
 
     // 합 UI
     [Header("=== Turn Fight Exchange UI ===")]
-
     // 일방 - 합 공격 표시 UI
-    [SerializeField] private GameObject exchangeSet;
+    [SerializeField] private GameObject exchangeSet; 
     [SerializeField] private Text exchangeText;
 
-    // 플레이어 합 UI
+
+    [Header("=== Turn Fight Exchange Player UI ===")]
     [SerializeField] private GameObject pExchangeUISet;
     [SerializeField] private Image exchange_pIconImage;
     [SerializeField] private Text exchange_pAttackNameText;
     [SerializeField] private Text exchange_pdamageText;
     [SerializeField] private Text exchange_pDescriptionText;
-    // 에너미 합 UI
+
+
+    [Header("=== Turn Fight Exchange Enemy UI ===")]
     [SerializeField] private GameObject eExchangeUISet;
     [SerializeField] private Image exchange_eIconImage;
     [SerializeField] private Text exchange_eAttackNameText;
@@ -96,9 +106,10 @@ public class Player_UI : MonoBehaviour
 
     // 전투 승리 & 패배 UI
     [Header("=== Turn Fight Win & Lose UI ===")]
-    [SerializeField] private GameObject endUISet;
-    [SerializeField] private CanvasGroup endUIcanvasGroup;
-
+    [SerializeField] private GameObject winUISet;
+    [SerializeField] private CanvasGroup winUICanvasGroup;
+    [SerializeField] private GameObject loseUISet;
+    [SerializeField] private CanvasGroup loseCanvasGroup;
 
     // 변경 사항
     // 싱글톤으로 변경함
@@ -123,7 +134,7 @@ public class Player_UI : MonoBehaviour
         // Fade 테스트용
         if (Input.GetKeyDown(KeyCode.V))
         {
-            TurnFight_End();
+            TurnFight_Lose();
         }
 
         Option();
@@ -211,6 +222,54 @@ public class Player_UI : MonoBehaviour
         attackSlotSet.SetActive(isOn);
     }
 
+    // 어택 포인트 UI 호출 & 동작
+    public void Turn_AttackPoint()
+    {
+        // Reset UI
+        for (int i = 0; i < pointImage.Length; i++)
+        {
+            pointImage[i].SetActive(false);
+        }
+
+        // UI On
+        for (int i = 0; i < Player_Manager.instnace.AttackPoint; i++)
+        {
+            pointImage[i].SetActive(true);
+        }
+    }
+
+    // 이면 게이지 UI 호출
+    public void UndersideGaugeUI(float addGauge)
+    {
+        if(gaugeCoroutine != null)
+            StopCoroutine(gaugeCoroutine);
+
+        StartCoroutine(UndersideGaugeCall(addGauge));
+    }
+
+    // 이면 게이지 동작
+    private IEnumerator UndersideGaugeCall(float addGauge)
+    {
+        float startGauge = undersideSlider.value;
+        float endGauge = addGauge;
+        float timer = 0;
+        while(timer < 1)
+        {
+            timer += Time.deltaTime;
+            undersideSlider.value = Mathf.Lerp(startGauge, endGauge, timer);
+            yield return null;
+        }
+
+        undersideSlider.value = endGauge;
+    }
+
+    // 이번 게이지 공격 버튼 UI 활성화
+    public void UndersideButtonOn(bool isOn)
+    {
+        undersideButton.SetActive(isOn);
+    }
+
+
     // 플레이어 타겟 선택 UI On / Off
     public void Turn_TargetSelect(bool isOn)
     {
@@ -227,22 +286,6 @@ public class Player_UI : MonoBehaviour
         else
         {
             targetNameText.text = null;
-        }
-    }
-
-    // 전투 자원 UI
-    public void Turn_AttackPoint()
-    {
-        // Reset UI
-        for (int i = 0; i < pointImage.Length; i++)
-        {
-            pointImage[i].SetActive(false);
-        }
-
-        // UI On
-        for (int i = 0; i < Player_Manager.instnace.AttackPoint; i++)
-        {
-            pointImage[i].SetActive(true);
         }
     }
 
@@ -319,6 +362,8 @@ public class Player_UI : MonoBehaviour
         }
     }
 
+
+
     // 전투 시작 버튼 활성화
     public void Turn_AttackButton(bool isOn)
     {
@@ -330,6 +375,8 @@ public class Player_UI : MonoBehaviour
     {
         Player_Manager.instnace.player_Turn.isSelect = false;
     }
+
+
 
     // 전투 시작 페이드 호출
     public void TurnFight_Fade()
@@ -439,25 +486,26 @@ public class Player_UI : MonoBehaviour
     }
 
 
-    // 전투 종료 UI 호출
-    public void TurnFight_End()
+
+
+    // 전투 승리 UI 호출
+    public void TurnFight_Win()
     {
-        StartCoroutine(TurnFightEndCall());
+        StartCoroutine(TurnFightWinCall());
     }
 
-
-    // 전투 종료 UI 동작
-    private IEnumerator TurnFightEndCall()
+    // 전투 승리 UI 동작
+    private IEnumerator TurnFightWinCall()
     {
         isFade = true;
 
         // 텍스트 페이드 인
-        endUISet.SetActive(true);
+        winUISet.SetActive(true);
         float timer = 0;
         while(timer < 1)
         {
             timer += Time.deltaTime * 1.5f;
-            endUIcanvasGroup.alpha = EasingFunctions.OutExpo(timer);
+            winUICanvasGroup.alpha = EasingFunctions.OutExpo(timer);
             yield return null;
         }
 
@@ -470,10 +518,10 @@ public class Player_UI : MonoBehaviour
         while(timer > 0)
         {
             timer -= Time.deltaTime * 1.5f;
-            endUIcanvasGroup.alpha = EasingFunctions.OutExpo(timer);
+            winUICanvasGroup.alpha = EasingFunctions.OutExpo(timer);
             yield return null;
         }
-        endUISet.SetActive(false);
+        winUISet.SetActive(false);
 
 
         // 화면 페이드 인
@@ -501,5 +549,46 @@ public class Player_UI : MonoBehaviour
         }
     }
 
+
+
+
+    // 전투 패배 UI 호출
+    public void TurnFight_Lose()
+    {
+        StartCoroutine(TurnFightLoseCall());
+    }
+
+    // 전투 패배 UI 동작 -> 패배 후 체크포인트 or 메인 화면 중 1택
+    private IEnumerator TurnFightLoseCall()
+    {
+        isFade = true;
+
+        // 텍스트 페이드 인
+        loseUISet.SetActive(true);
+        float timer = 0;
+        while (timer < 1)
+        {
+            timer += Time.deltaTime * 1.5f;
+            loseCanvasGroup.alpha = EasingFunctions.OutExpo(timer);
+            yield return null;
+        }
+
+        // 딜레이
+        yield return new WaitForSeconds(0.5f);
+
+        // 화면 페이드 인
+        fadeSet.SetActive(true);
+        timer = 0;
+        while (timer < 1)
+        {
+            timer += Time.deltaTime * 1.5f;
+            fadeImage.color = new Color(fadeImage.color.r, fadeImage.color.g, fadeImage.color.b, EasingFunctions.OutExpo(timer));
+            yield return null;
+        }
+
+        // 전투 종료 후 어디로 넘어갈건지?
+        // 1. 체크포인트 구역
+        // 2. 메인 화면
+    }
     #endregion
 }

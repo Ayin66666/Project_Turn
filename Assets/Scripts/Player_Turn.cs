@@ -52,13 +52,14 @@ public class Player_Turn : MonoBehaviour
     [SerializeField] private int enemyIndex;
 
 
-    // 맨 처음 전투 시작할 때 호출 -> 등장 모션 같은거
+    // 턴 전투 시작 애니메이션 호출
     public void Turn_StartAnim()
     {
         curCoroutine = StartCoroutine(Turn_StartAnimCall());
     }
 
 
+    // 턴 전투 시작 애니메이션 동작
     private IEnumerator Turn_StartAnimCall()
     {
         isSpawnAnim = true;
@@ -83,7 +84,7 @@ public class Player_Turn : MonoBehaviour
     }
 
 
-    // 지금은 기본값만 던지지만, 버프 발라진 값을 던지는 기능도 필요함!
+    // 공격 슬롯 속도 셋팅
     public void Slot_SpeedSetting()
     {
         for (int i = 0; i < attackSlot.Count; i++)
@@ -152,7 +153,6 @@ public class Player_Turn : MonoBehaviour
         // 몬스터 공격 슬롯 가져오기
         enemyAttackList = Player_Manager.instnace.turnManger.GetEnemyAttackSlot();
         
-
         // 타겟 선택 UI On
         enemyIndex = 0;
         Player_UI.instance.Turn_TargetSelect_DataSetting(true, enemyAttackList[enemyIndex].slotOwner.GetComponent<Enemy_Base>());
@@ -205,7 +205,6 @@ public class Player_Turn : MonoBehaviour
         // 타겟 셋팅
         slot.Attack_TargetSetting(enemyAttackList[enemyIndex]);
 
-
         // 타겟 선택 UI Off
         Player_UI.instance.Turn_TargetSelect(false);
         Player_UI.instance.Turn_EngageUI(Player_UI.Object.None, slot, false);
@@ -215,6 +214,7 @@ public class Player_Turn : MonoBehaviour
         // 전투 시작 체크
         Turn_FightButtonCheck();
     }
+
 
     // 전투 시작 버튼 활성화 체크
     private void Turn_FightButtonCheck()
@@ -232,6 +232,7 @@ public class Player_Turn : MonoBehaviour
         // 모든 슬롯에 공격이 지정된 경우
         Player_UI.instance.Turn_AttackButton(true);
     }
+
 
     // 합 이동 호출
     public void Turn_ExchangeMove(Transform movePos)
@@ -282,7 +283,6 @@ public class Player_Turn : MonoBehaviour
     {
         isRecoilMove = true;
 
-
         // 애니메이션 대기 종료
         if(anim != null)
         {
@@ -290,15 +290,11 @@ public class Player_Turn : MonoBehaviour
             anim.SetBool("isExchange", false);
         }
 
-
-
         // 합 후 딜레이
         yield return new WaitForSeconds(Random.Range(0.25f, 0.5f));
 
-
         // 합 후 밀림 이동 동작
         StartCoroutine(Turn_ExchanageResuitMove(type));
-
 
         // 합 애니메이션
         switch (type)
@@ -328,10 +324,8 @@ public class Player_Turn : MonoBehaviour
                 break;
         }
 
-
         // 밀림 이후 대기
         yield return new WaitForSeconds(Random.Range(0.25f, 0.55f));
-
 
         isRecoilMove = false;
     }

@@ -486,7 +486,7 @@ public class TurnFight_Manager : MonoBehaviour
         }
 
         // 전투 종료 UI 호출
-        Player_UI.instance.TurnFight_End();
+        Player_UI.instance.TurnFight_Lose();
         while(Player_UI.instance.isFade)
         {
             yield return null;
@@ -520,7 +520,7 @@ public class TurnFight_Manager : MonoBehaviour
         }
 
         // 전투 종료 UI 호출 -> 이거 일단 승리꺼 넣어둠!
-        Player_UI.instance.TurnFight_End();
+        Player_UI.instance.TurnFight_Lose();
 
         // 
     } // -> 미완성
