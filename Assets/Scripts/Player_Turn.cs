@@ -40,6 +40,7 @@ public class Player_Turn : MonoBehaviour
 
     [Header("=== Pos Setting ===")]
     [SerializeField] private Transform[] exchange_RecoilPos;
+    public Transform exchangePos;
 
 
     [Header("=== Component ===")]
@@ -67,7 +68,7 @@ public class Player_Turn : MonoBehaviour
         if(anim != null)
         {
             // Animation
-            anim.SetTrigger("Spawn");
+            anim.SetTrigger("Action");
             anim.SetBool("isSpawn", true);
 
             // Camera Movement
@@ -121,32 +122,27 @@ public class Player_Turn : MonoBehaviour
     // 슬롯에 공격 삽입
     public void Slot_AttackSetting(Attack_Base attack)
     {
-        Debug.Log("Call slotSetting");
         for(int i = 0;i < attackSlot.Count; i++)
         {
            if(!attackSlot[i].haveAttack)
             {
-                attackSlot[i].Attack_Setting_Player(attack);
+                attackSlot[i].Attack_Setting(attack);
                 Slot_TargetSetting(attackSlot[i]);
                 break;
             }
         }
-
-        Debug.Log("full skill");
     }
 
 
     // 해당 슬롯으로 뭘 때릴지 선택
     public void Slot_TargetSetting(Attack_Slot slot)
     {
-        Debug.Log("Call Slot TargetSetting");
         StartCoroutine(Slot_TargetSettingCall(slot));
     }
 
 
     private IEnumerator Slot_TargetSettingCall(Attack_Slot slot)
     {
-        Debug.Log("Call Slot Target Setting");
         isExchangeTargetSelect = true;
 
         // 리스트 정리 -> 몹이 죽은 경우 null 뜰 수도 있으니
@@ -204,9 +200,9 @@ public class Player_Turn : MonoBehaviour
             yield return null;
         }
 
-        // 타겟 셋팅
-        slot.Attack_TargetSetting(enemyAttackList[enemyIndex]);
-        enemyAttackList[enemyIndex].Attack_TargetSetting(slot);
+        // 타겟 셋팅 -> 구조체 버전
+        Player_Manager.instnace.turnManger.Exchange_Setting_Add(slot, enemyAttackList[enemyIndex]);
+        slot.targetSlot = enemyAttackList[enemyIndex];
 
         // 타겟 선택 UI Off
         Player_UI.instance.Turn_TargetSelect(false);
@@ -250,12 +246,47 @@ public class Player_Turn : MonoBehaviour
     {
         isExchangeMove = true;
 
+        // 애니메이션
+        if(anim != null)
+        {
+            anim.SetTrigger("Action");
+            anim.SetBool("isExchangeMove", true);
+        }
+
+        // 이동 코드
         Vector3 startPos = transform.position;
         Vector3 endPos = movePos.position;
         float timer = 0;
         while (timer < 1)
         {
             timer += Time.deltaTime * 1.5f;
+            transform.position = Vector3.Lerp(startPos, endPos, EasingFunctions.OutExpo(timer));
+            yield return null;
+        }
+
+        isExchangeMove = false;
+    }
+
+
+    // 합 밀림 이후 다시 합 위치로 이동 호출
+    public void Turn_ExchangeMove_After(Vector3 pos)
+    {
+        StartCoroutine(Turn_ExchangeMoveAfterCall(pos));
+    }
+
+
+    // 합 밀림 이후 다시 합 위치로 이동 동작
+    private IEnumerator Turn_ExchangeMoveAfterCall(Vector3 pos)
+    {
+        isExchangeMove = true;
+
+        Vector3 startPos = transform.position;
+        Vector3 endPos = pos;
+
+        float timer = 0;
+        while (timer < 1)
+        {
+            timer += Time.deltaTime * 4f;
             transform.position = Vector3.Lerp(startPos, endPos, EasingFunctions.OutExpo(timer));
             yield return null;
         }
@@ -271,6 +302,7 @@ public class Player_Turn : MonoBehaviour
         {
             anim.SetTrigger("Exchange");
             anim.SetBool("isExchange", true);
+            anim.SetBool("isExchangeAnim", true);
         }
     }
 
@@ -287,43 +319,34 @@ public class Player_Turn : MonoBehaviour
     {
         isRecoilMove = true;
 
-        // 애니메이션 대기 종료
-        if(anim != null)
-        {
-            anim.SetTrigger("Exchange");
-            anim.SetBool("isExchange", false);
-        }
-
-        // 합 후 딜레이
-        yield return new WaitForSeconds(Random.Range(0.25f, 0.5f));
-
         // 합 후 밀림 이동 동작
         StartCoroutine(Turn_ExchanageResuitMove(type));
 
         // 합 애니메이션
         if(anim != null)
         {
+            anim.SetBool("isExchange", false);
             switch (type)
             {
                 case ExchangeResuit.Win:
-                    anim.SetBool("EngageWin", true);
-                    while (anim.GetBool("EngageWin"))
+                    anim.SetBool("isExchangeWin", true);
+                    while (anim.GetBool("isExchangeWin"))
                     {
                         yield return null;
                     }
                     break;
 
                 case ExchangeResuit.Draw:
-                    anim.SetBool("EngageDraw", true);
-                    while (anim.GetBool("EngageDraw"))
+                    anim.SetBool("isExchangeDraw", true);
+                    while (anim.GetBool("isExchangeDraw"))
                     {
                         yield return null;
                     }
                     break;
 
                 case ExchangeResuit.Lose:
-                    anim.SetBool("EngageLose", true);
-                    while (anim.GetBool("EngageLose"))
+                    anim.SetBool("isExchangeLose", true);
+                    while (anim.GetBool("isExchangeLose"))
                     {
                         yield return null;
                     }
@@ -331,8 +354,8 @@ public class Player_Turn : MonoBehaviour
             }
         }
 
-        // 밀림 이후 대기
-        yield return new WaitForSeconds(Random.Range(0.25f, 0.55f));
+        // Delay
+        yield return new WaitForSeconds(Random.Range(0.15f, 0.25f));
 
         isRecoilMove = false;
     }
@@ -341,8 +364,6 @@ public class Player_Turn : MonoBehaviour
     // 합 밀림 이동 동작
     private IEnumerator Turn_ExchanageResuitMove(ExchangeResuit type)
     {
-        isRecoilMove = true;
-
         // Recoil Move
         Vector3 startPos = transform.position;
         Vector3 endPos = exchange_RecoilPos[type == ExchangeResuit.Win ? 0 : (type == ExchangeResuit.Draw ? 1 : 2)].position;
@@ -353,18 +374,13 @@ public class Player_Turn : MonoBehaviour
             transform.position = Vector3.Lerp(startPos, endPos, EasingFunctions.OutExpo(timer));
             yield return null;
         }
-
-        // Delay
-        yield return new WaitForSeconds(Random.Range(0.15f, 0.25f));
-
-        isRecoilMove = false;
     }
 
 
     // 공격 기능 호출 & 동작
-    public void Turn_Attack(GameObject target, Attack_Base attack)
+    public void Turn_Attack(GameObject target, Attack_Base attack, int attackCount)
     {
-        attack.UseAttack(Attack_Base.AttackOwner.Player, gameObject, target);
+        attack.UseAttack(Attack_Base.AttackOwner.Player, gameObject, target, attackCount);
     }
 
 

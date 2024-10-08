@@ -19,5 +19,5 @@ public abstract class Attack_Base : MonoBehaviour
     public enum Type { Attack, Defense, Buff, Complex } // 나중에 스킬을 태그 별로 나눈다면?
 
 
-    public abstract void UseAttack(AttackOwner attackOwner, GameObject ownerObj, GameObject targetObj);
+    public abstract void UseAttack(AttackOwner attackOwner, GameObject ownerObj, GameObject targetObj, int attackCount);
 }

@@ -34,4 +34,8 @@ public class Enemy_Status_SO : ScriptableObject
 
     [SerializeField] private float criticalMultiplier;
     public float CriticalMultiplier { get { return criticalMultiplier; } }
+
+
+    [SerializeField] private Vector2Int slotSpeed;
+    public Vector2Int SlotSpeed { get { return slotSpeed; } }
 }

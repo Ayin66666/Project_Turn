@@ -44,6 +44,12 @@ public class Enemy_Normal : Enemy_Base
     [SerializeField] private GameObject dieVFX;
 
 
+    private void Awake()
+    {
+        Status_Setting();
+    }
+
+
     // 합 공격 설정
     public override void Turn_AttackSetting()
     {
@@ -58,9 +64,21 @@ public class Enemy_Normal : Enemy_Base
         }
         else
         {
-            attack_Slots[0].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[1]);
-            attack_Slots[1].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[1]);
-            attack_Slots[2].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[1]);
+            // 슬롯 속도 할당
+            Slot_SpeedSetting();
+
+            // 테스트용!
+            for (int i = 0; i < attack_Slots.Count; i++)
+            {
+                Debug.Log("현제 데이터 삽입 번째 : " + i + " 번째 공격 슬롯 데이터");
+                attack_Slots[i].Attack_Setting(attacklist[1]);
+
+                Attack_Slot targetSlot = Turn_AttackTargetSetting();
+
+                attack_Slots[i].Attack_Setting(Attack_Slot.AttackType.Oneside_Attack, targetSlot);
+                turnManager.Exchange_Setting_Enemy(attack_Slots[i], targetSlot);
+            }
+
 
             /*
             // 특수 공격 조건 체크
@@ -156,13 +174,15 @@ public class Enemy_Normal : Enemy_Base
     // 대기 대기 대기
     private void Pattern0()
     {
-        // 약공격 + 약공격 + 대기
+        // 대기 + 대기 + 대기
         curPattern = AttackPattern.None;
 
         // 공격 셋팅
-        attack_Slots[0].Attack_Setting_Enemy(Trun_TargetSetting(), null);
-        attack_Slots[1].Attack_Setting_Enemy(Trun_TargetSetting(), null);
-        attack_Slots[2].Attack_Setting_Enemy(Trun_TargetSetting(), null);
+        for (int i = 0; i < attack_Slots.Count; i++)
+        {
+            attack_Slots[i].Attack_Setting(null);
+            turnManager.Exchange_Setting_Enemy(attack_Slots[i], null);
+        }
     }
 
     // 일반공격 패턴 1
@@ -172,9 +192,14 @@ public class Enemy_Normal : Enemy_Base
         curPattern = AttackPattern.PatternA;
 
         // 공격 셋팅
-        attack_Slots[0].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[1]);
-        attack_Slots[1].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[1]);
-        attack_Slots[2].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[0]);
+        attack_Slots[0].Attack_Setting(attacklist[0]);
+        turnManager.Exchange_Setting_Enemy(attack_Slots[0], Turn_AttackTargetSetting());
+
+        attack_Slots[1].Attack_Setting(attacklist[0]);
+        turnManager.Exchange_Setting_Enemy(attack_Slots[1], Turn_AttackTargetSetting());
+
+        attack_Slots[2].Attack_Setting(null);
+        turnManager.Exchange_Setting_Enemy(attack_Slots[2], Turn_AttackTargetSetting());
     }
 
     // 일반공격 패턴 2
@@ -184,9 +209,14 @@ public class Enemy_Normal : Enemy_Base
         curPattern = AttackPattern.PatternB;
 
         // 공격 셋팅
-        attack_Slots[0].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[1]);
-        attack_Slots[1].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[2]);
-        attack_Slots[2].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[1]);
+        attack_Slots[0].Attack_Setting(attacklist[0]);
+        turnManager.Exchange_Setting_Enemy(attack_Slots[0], Turn_AttackTargetSetting());
+
+        attack_Slots[1].Attack_Setting(attacklist[1]);
+        turnManager.Exchange_Setting_Enemy(attack_Slots[1], Turn_AttackTargetSetting());
+
+        attack_Slots[2].Attack_Setting(attacklist[0]);
+        turnManager.Exchange_Setting_Enemy(attack_Slots[2], Turn_AttackTargetSetting());
     }
 
     // 일반공격 패턴 3
@@ -196,9 +226,14 @@ public class Enemy_Normal : Enemy_Base
         curPattern = AttackPattern.PatternC;
 
         // 공격 셋팅
-        attack_Slots[0].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[2]);
-        attack_Slots[1].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[2]);
-        attack_Slots[2].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[0]);
+        attack_Slots[0].Attack_Setting(attacklist[1]);
+        turnManager.Exchange_Setting_Enemy(attack_Slots[0], Turn_AttackTargetSetting());
+
+        attack_Slots[1].Attack_Setting(attacklist[1]);
+        turnManager.Exchange_Setting_Enemy(attack_Slots[1], Turn_AttackTargetSetting());
+
+        attack_Slots[2].Attack_Setting(null);
+        turnManager.Exchange_Setting_Enemy(attack_Slots[2], Turn_AttackTargetSetting());
     }
 
 
@@ -209,9 +244,14 @@ public class Enemy_Normal : Enemy_Base
         curPattern = AttackPattern.PatternD;
 
         // 공격 셋팅
-        attack_Slots[0].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[3]);
-        attack_Slots[1].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[2]);
-        attack_Slots[2].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[1]);
+        attack_Slots[0].Attack_Setting(attacklist[2]);
+        turnManager.Exchange_Setting_Enemy(attack_Slots[0], Turn_AttackTargetSetting());
+
+        attack_Slots[1].Attack_Setting(attacklist[1]);
+        turnManager.Exchange_Setting_Enemy(attack_Slots[1], Turn_AttackTargetSetting());
+
+        attack_Slots[2].Attack_Setting(attacklist[0]);
+        turnManager.Exchange_Setting_Enemy(attack_Slots[2], Turn_AttackTargetSetting());
     }
 
     // 강공격 패턴 2
@@ -221,9 +261,14 @@ public class Enemy_Normal : Enemy_Base
         curPattern = AttackPattern.PatternE;
 
         // 공격 셋팅
-        attack_Slots[0].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[3]);
-        attack_Slots[1].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[2]);
-        attack_Slots[2].Attack_Setting_Enemy(Trun_TargetSetting(), attacklist[2]);
+        attack_Slots[0].Attack_Setting(attacklist[2]);
+        turnManager.Exchange_Setting_Enemy(attack_Slots[0], Turn_AttackTargetSetting());
+
+        attack_Slots[1].Attack_Setting(attacklist[1]);
+        turnManager.Exchange_Setting_Enemy(attack_Slots[1], Turn_AttackTargetSetting());
+
+        attack_Slots[2].Attack_Setting(attacklist[1]);
+        turnManager.Exchange_Setting_Enemy(attack_Slots[2], Turn_AttackTargetSetting());
     }
     #endregion
 

@@ -124,6 +124,8 @@ public class Player_Manager : MonoBehaviour
         int ran = Random.Range(0, 100);
         valueDamage = ran <= criticalChance ? valueDamage *= criticalChance : valueDamage;
 
+        Debug.Log("계산된 데미지 : " + (int)valueDamage);
+
         // 데미지 & 크리티컬 여부 반환
         return ((int)valueDamage, ran <= criticalChance ? true : false);
     }

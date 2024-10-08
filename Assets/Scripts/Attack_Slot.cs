@@ -15,9 +15,14 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     public GameObject slotOwner;
     public bool haveAttack;
     public int slotSpeed;
+    public Exchange myExchange;
 
     public enum SlotType { Player, Enemy }
     public enum AttackType { None, Oneside_Attack, Exchange_Attacks }
+
+
+    [Header("=== Cur Attack Setting ===")]
+    [SerializeField] private int curAttackCount;
 
 
     [Header("=== Slot UI ===")]
@@ -38,38 +43,36 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     private Coroutine highlightCoroutine;
 
 
-    // 공격 셋팅 - Player 버전
-    public void Attack_Setting_Player(Attack_Base attack)
+
+    // 공격 셋팅 - 슬롯에 공격 셋팅
+    public void Attack_Setting(Attack_Base myAttack)
     {
-        Debug.Log("call attack Setting");
-
-        // 공격 슬롯 UI 삽입
-        iconImage.sprite = attack.icon;
-        myAttack = attack;
-        haveAttack = true;
-    }
-
-
-    // 공격 셋팅 - Enemy 버전
-    public void Attack_Setting_Enemy(Attack_Slot targetSlot, Attack_Base attack)
-    {
-        Debug.Log("call Enemy attack Setting");
-
-        if(attack != null)
+        if(myAttack != null)
         {
-            // 타겟 셋팅
-            Attack_TargetSetting(targetSlot);
+            // 슬롯 데이터 셋팅
+            haveAttack = true;
 
             // 공격 슬롯 UI 삽입
-            iconImage.sprite = attack.icon;
-            myAttack = attack;
-            haveAttack = true;
+            this.myAttack = myAttack;
+            iconImage.sprite = myAttack.icon;
         }
         else
         {
-            Debug.Log("공격 없음!");
-            attackType = AttackType.None;
+            haveAttack = false;
+
+            myAttack = null;
+            iconImage.sprite = null;
         }
+    }
+
+
+    // 공격 셋팅 - 공격 타입 & 타겟 셋팅
+    public void Attack_Setting(AttackType type, Attack_Slot target)
+    {
+        Debug.Log("Call Target SEtting");
+        // 공격 상태 & 타겟 슬롯 셋팅
+        attackType = type;
+        targetSlot = target;
     }
 
 
@@ -77,57 +80,6 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     public void Speed_Setting(int speed)
     {
         slotSpeed = speed;
-    }
-
-
-    // 해당 슬롯으로 누굴 공격할건지 셋팅
-    public void Attack_TargetSetting(Attack_Slot target)
-    {
-        targetSlot = target;
-
-        // 합 상태 셋팅
-        switch (slotType)
-        {
-            case SlotType.Player:
-                // 속도에 따른 합 & 일방 공격 상태 설정
-                if (slotSpeed >= targetSlot.slotSpeed)
-                {
-                    // 만약 내가 선택한 공격에 이미 합을 하는 공격이 있다면
-                    if(targetSlot.targetSlot != null)
-                    {
-                        // 해당 공격의 상태를 일방 공격으로 변경
-                        target.targetSlot.attackType = AttackType.Oneside_Attack;
-                    }
-
-                    attackType = AttackType.Exchange_Attacks;
-                    target.Attack_TargetSetting(this);
-                }
-                else if (slotSpeed < targetSlot.slotSpeed)
-                {
-                    attackType = AttackType.Oneside_Attack;
-                }
-                break;
-
-            case SlotType.Enemy:
-                // 몬스터는 무조건 먼저 공격을 셋팅하니 무조건 일방임!
-                if(targetSlot.myAttack == null)
-                {
-                    attackType = AttackType.Oneside_Attack;
-                }
-                else
-                {
-                    // 속도에 따른 합 & 일방 공격 상태 설정
-                    if (slotSpeed >= targetSlot.slotSpeed)
-                    {
-                        attackType = AttackType.Exchange_Attacks;
-                    }
-                    else if (slotSpeed < targetSlot.slotSpeed)
-                    {
-                        attackType = AttackType.Oneside_Attack;
-                    }
-                }
-                break;
-        }
     }
 
 
@@ -141,6 +93,8 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
             targetSlot.Highlights_Effect(false);
         }
 
+        // 남은 공격 횟수 리셋
+        curAttackCount = 0;
 
         // 스테이터스 리셋
         attackType = AttackType.None;
@@ -149,6 +103,7 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         myAttack = null;
         targetSlot = null;
         lineTarget = null;
+        myExchange = null;
 
         // UI 리셋
         iconImage.sprite = null;
@@ -213,7 +168,7 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
             while (timer < 1)
             {
-                timer += Time.deltaTime;
+                timer += Time.deltaTime * 2f;
                 highlightImage.color = new Color(highlightImage.color.r, highlightImage.color.g, highlightImage.color.b, Mathf.Lerp(start, end, EasingFunctions.OutExpo(timer)));
                 yield return null;
             }
@@ -252,15 +207,18 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
                 switch (attackType)
                 {
                     case AttackType.None:
-                        // Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, this, true);
+                        Debug.Log("플레이어 공격 표기 호출 / none");
+                        Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, this, true);
                         break;
 
                     case AttackType.Oneside_Attack:
+                        Debug.Log("플레이어 공격 표기 호출 / oneside");
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, this, true);
                         Attack_LineSetting(true, targetSlot.gameObject);
                         break;
 
                     case AttackType.Exchange_Attacks:
+                        Debug.Log("플레이어 공격 표기 호출 / exchange");
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, this, true);
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, targetSlot, true);
                         Attack_LineSetting(true, targetSlot.gameObject);
@@ -273,15 +231,18 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
                 switch (attackType)
                 {
                     case AttackType.None:
-                        // Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, this, true);
+                        Debug.Log("에너미 공격 표기 호출 / None");
+                        Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, this, true);
                         break;
 
                     case AttackType.Oneside_Attack:
+                        Debug.Log("에너미 공격 표기 호출 / Oneside");
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, this, true);
                         Attack_LineSetting(true, targetSlot.gameObject);
                         break;
 
                     case AttackType.Exchange_Attacks:
+                        Debug.Log("에너미 공격 표기 호출 / exchange");
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, this, true);
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, targetSlot, true);
                         Attack_LineSetting(true, targetSlot.gameObject);
@@ -327,8 +288,11 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         switch (slotType)
         {
             case SlotType.Player:
-                ResetSlot();
-                // 추가한다면 슬롯 초기화 기능?
+                if(myAttack != null)
+                {
+                    Player_Manager.instnace.turnManger.Exchange_Setting_Remove(this, targetSlot, myExchange);
+                    //Player_Manager.instnace.turnManger.Exchange_Setting_Remove(this, targetSlot);
+                }
                 break;
 
             case SlotType.Enemy:

@@ -19,6 +19,7 @@ public class Player_UI : MonoBehaviour
     public bool isOptionOn;
     public bool isExitOn;
     public bool isFpsOn;
+    public bool isInventoryOn;
     public enum Object { None, Player, Enemy }
 
 
@@ -30,6 +31,7 @@ public class Player_UI : MonoBehaviour
     [SerializeField] private GameObject skillSet;
     [SerializeField] private GameObject exitSet;
     [SerializeField] private Toggle fpsToggle;
+    [SerializeField] private GameObject InventorySet;
 
     private float deltaTime = 0f;
 
@@ -147,6 +149,7 @@ public class Player_UI : MonoBehaviour
         }
 
         Menu();
+        Inventory();
 
         //FPS 표시 및 설정용
         deltaTime += (Time.unscaledDeltaTime - deltaTime) * 0.1f;
@@ -232,6 +235,23 @@ public class Player_UI : MonoBehaviour
             {
                 isMenuOn = false;
                 menuSet.SetActive(false);
+            }
+        }
+    }
+
+    public void Inventory()
+    {
+        if (Input.GetKeyDown(KeyCode.I))
+        {
+            if (!isInventoryOn)
+            {
+                isInventoryOn = true;
+                InventorySet.SetActive(true);
+            }
+            else
+            {
+                isInventoryOn = false;
+                InventorySet.SetActive(false);
             }
         }
     }
@@ -423,6 +443,11 @@ public class Player_UI : MonoBehaviour
         // On Off 체크
         if (isOn)
         {
+            if(slot == null)
+            {
+                return;
+            }
+
             if(slot.myAttack == null)
             {
                 return;

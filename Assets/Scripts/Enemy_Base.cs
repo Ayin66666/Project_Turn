@@ -61,7 +61,7 @@ public abstract class Enemy_Base : MonoBehaviour
     public int physicalDamage;
     public int magcialDamage;
 
-    public int criticalChance;
+    public float criticalChance;
     public float criticalMultiplier;
 
     private Vector2Int slotSpeed;
@@ -75,10 +75,12 @@ public abstract class Enemy_Base : MonoBehaviour
 
     [Header("=== Pos Setting ===")]
     [SerializeField] private Transform[] recoilPos;
+    public Transform exchangePos;
 
 
     [Header("=== Component ===")]
     [SerializeField] protected Enemy_UI enemyUI;
+    public TurnFight_Manager turnManager;
     public Animator anim = null;
 
     #region Property
@@ -104,7 +106,7 @@ public abstract class Enemy_Base : MonoBehaviour
         private set { magcialDamage = value; }
     }
 
-    public int CriticalChance
+    public float CriticalChance
     {
         get { return criticalChance; }
         private set { criticalChance = value; }
@@ -124,11 +126,38 @@ public abstract class Enemy_Base : MonoBehaviour
     #endregion
 
 
+    // 스테이터스 셋팅
+    protected void Status_Setting()
+    {
+        hp = status.Hp;
+        physicalDefense = status.PhysicalDefense;
+        magicalDefense = status.MagicalDefense;
+
+        physicalDamage = status.PhysicalDamage;
+        magcialDamage = status.MagcialDamage;
+
+        criticalChance = status.CriticalChance;
+
+        SlotSpeed = status.SlotSpeed;
+    }
+
+
+    // 슬롯 속도 셋팅
+    public void Slot_SpeedSetting()
+    {
+        for (int i = 0; i < attack_Slots.Count; i++)
+        {
+            attack_Slots[i].slotSpeed = Random.Range(slotSpeed.x, slotSpeed.y);
+        }
+    }
+
+
     // 합 공격 설정 -> 이거 몬스터별 턴마다 특수공격까지 고려하면 각 몬스터마다 다르게 만드는게 맞을듯
     public abstract void Turn_AttackSetting();
 
+
     // 해당 슬롯으로 누굴 공격할건지 셋팅
-    public Attack_Slot Trun_TargetSetting()
+    public Attack_Slot Turn_AttackTargetSetting()
     {
         // 이거 공격이 한쪽에 안몰리게 하는 기능도 고려해야하는데...
         int ran = Random.Range(0, Player_Manager.instnace.player_Turn.attackSlot.Count);
@@ -159,6 +188,13 @@ public abstract class Enemy_Base : MonoBehaviour
         }
 
         isExchangeMove = false;
+    }
+
+
+    // 공격 호출
+    public void Turn_Attack(GameObject target, Attack_Base attack, int attackCount)
+    {
+        attack.UseAttack(Attack_Base.AttackOwner.Player, gameObject, target, attackCount);
     }
 
 
@@ -196,51 +232,43 @@ public abstract class Enemy_Base : MonoBehaviour
     // 합 결과 애니메이션 호출
     public void Turn_ExchangeResuitAnim(ExchangeResuit type)
     {
-        curCoroutine = StartCoroutine(Turn_ExchangeRessuitAnimCall(type));
+        curCoroutine = StartCoroutine(Turn_ExchangeResuitMoveCall(type));
     }
 
 
-    // 합 종료 후 승리, 무승부, 패배 애니메이션 동작
-    private IEnumerator Turn_ExchangeRessuitAnimCall(ExchangeResuit type)
+    // 합 결과 애니메이션 동작
+    private IEnumerator Turn_ExchangeResuitAnimCall(ExchangeResuit type)
     {
         isRecoilMove = true;
 
-        if(anim != null)
-        {
-            anim.SetTrigger("Attack");
-            anim.SetBool("EngageAnim", true);
-        }
-
-        // Delay
-        yield return new WaitForSeconds(Random.Range(0.5f, 1f));
-
-        // Recoil Move
+        // 합 후 밀림 이동 동작
         StartCoroutine(Turn_ExchangeResuitMoveCall(type));
 
-        // Win & Lose Animation
-        if(anim != null)
+        // 합 애니메이션
+        if (anim != null)
         {
+            anim.SetBool("isExchange", false);
             switch (type)
             {
                 case ExchangeResuit.Win:
-                    anim.SetBool("EngageWin", true);
-                    while (anim.GetBool("EngageWin"))
+                    anim.SetBool("isExchangeWin", true);
+                    while (anim.GetBool("isExchangeWin"))
                     {
                         yield return null;
                     }
                     break;
 
                 case ExchangeResuit.Draw:
-                    anim.SetBool("EngageDraw", true);
-                    while (anim.GetBool("EngageDraw"))
+                    anim.SetBool("isExchangeDraw", true);
+                    while (anim.GetBool("isExchangeDraw"))
                     {
                         yield return null;
                     }
                     break;
 
                 case ExchangeResuit.Lose:
-                    anim.SetBool("EngageLose", true);
-                    while (anim.GetBool("EngageLose"))
+                    anim.SetBool("isExchangeLose", true);
+                    while (anim.GetBool("isExchangeLose"))
                     {
                         yield return null;
                     }
@@ -248,11 +276,37 @@ public abstract class Enemy_Base : MonoBehaviour
             }
         }
 
-
         // Delay
-        yield return new WaitForSeconds(Random.Range(0.25f, 0.55f));
+        yield return new WaitForSeconds(Random.Range(0.15f, 0.25f));
 
         isRecoilMove = false;
+    }
+
+
+    // 합 밀림 이후 다시 합 위치로 이동 호출
+    public void Turn_ExchangeMove_After(Vector3 pos)
+    {
+        StartCoroutine(Turn_ExchangeMoveAfterCall(pos));
+    }
+
+
+    // 합 밀림 이후 다시 합 위치로 이동 동작
+    private IEnumerator Turn_ExchangeMoveAfterCall(Vector3 pos)
+    {
+        isExchangeMove = true;
+
+        Vector3 startPos = transform.position;
+        Vector3 endPos = pos;
+
+        float timer = 0;
+        while (timer < 1)
+        {
+            timer += Time.deltaTime * 4f;
+            transform.position = Vector3.Lerp(startPos, endPos, EasingFunctions.OutExpo(timer));
+            yield return null;
+        }
+
+        isExchangeMove = false;
     }
 
 
