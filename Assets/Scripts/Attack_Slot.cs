@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -16,7 +15,7 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     public bool haveAttack;
     public int slotSpeed;
     public Exchange myExchange;
-
+    [HideInInspector] public Enemy_Base enemy;
     public enum SlotType { Player, Enemy }
     public enum AttackType { None, Oneside_Attack, Exchange_Attacks }
 
@@ -33,16 +32,22 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
 
     [Header("=== Attack Iine ===")]
+    public float curveHeight = 2.0f; // 곡선의 최대 높이 (곡률)
+    public int curveResolution = 20; // 곡선의 해상도 (포인트 개수)
     [SerializeField] private LineRenderer line = null;
     private GameObject lineTarget;
-    public int curveResolution = 20; // 곡선의 해상도 (포인트 개수)
-    public float curveHeight = 2.0f; // 곡선의 최대 높이 (곡률)
 
 
     [Header("=== Coroutine ===")]
     private Coroutine highlightCoroutine;
-
-
+    private Coroutine lineCoroutine;
+    private void Awake()
+    {
+        if(slotType == SlotType.Enemy)
+        {
+            enemy = slotOwner.GetComponent<Enemy_Base>();
+        }
+    }
 
     // 공격 셋팅 - 슬롯에 공격 셋팅
     public void Attack_Setting(Attack_Base myAttack)
@@ -54,6 +59,7 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
             // 공격 슬롯 UI 삽입
             this.myAttack = myAttack;
+            iconImage.color = new Color(iconImage.color.r, iconImage.color.g, iconImage.color.b, 1);
             iconImage.sprite = myAttack.icon;
         }
         else
@@ -69,7 +75,6 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     // 공격 셋팅 - 공격 타입 & 타겟 셋팅
     public void Attack_Setting(AttackType type, Attack_Slot target)
     {
-        Debug.Log("Call Target SEtting");
         // 공격 상태 & 타겟 슬롯 셋팅
         attackType = type;
         targetSlot = target;
@@ -80,6 +85,7 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     public void Speed_Setting(int speed)
     {
         slotSpeed = speed;
+        speedText.text = speed.ToString();
     }
 
 
@@ -92,6 +98,7 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         {
             targetSlot.Highlights_Effect(false);
         }
+        iconImage.color = new Color(iconImage.color.r, iconImage.color.g, iconImage.color.b, 0);
 
         // 남은 공격 횟수 리셋
         curAttackCount = 0;
@@ -105,9 +112,9 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         lineTarget = null;
         myExchange = null;
 
-        // UI 리셋
+         // UI 리셋
         iconImage.sprite = null;
-        speedText.text = "0";
+        // speedText.text = "0";
     }
 
 
@@ -136,6 +143,7 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         }
     }
 
+
     Vector3 CalculateQuadraticBezierPoint(float t, Vector3 p0, Vector3 p1, Vector3 p2)
     {
         float u = 1 - t;
@@ -159,7 +167,7 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     private IEnumerator HighLight(bool isOn)
     {
         float start = 0;
-        float end = 0.5f;
+        float end = 1;
         float timer = 0;
 
         if (isOn)
@@ -204,25 +212,30 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         switch (slotType)
         {
             case SlotType.Player:
+
+                // 사운드
+                Player_Manager.instnace.UI_Sound_Call(0);
+
                 switch (attackType)
                 {
                     case AttackType.None:
-                        Debug.Log("플레이어 공격 표기 호출 / none");
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, this, true);
                         break;
 
                     case AttackType.Oneside_Attack:
-                        Debug.Log("플레이어 공격 표기 호출 / oneside");
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, this, true);
+                        Player_UI.instance.Turn_Exchange(false);
                         Attack_LineSetting(true, targetSlot.gameObject);
                         break;
 
                     case AttackType.Exchange_Attacks:
-                        Debug.Log("플레이어 공격 표기 호출 / exchange");
+                        Player_UI.instance.Turn_WinningUI(true, this, targetSlot);
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, this, true);
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, targetSlot, true);
+                        Player_UI.instance.Turn_Exchange(true);
                         Attack_LineSetting(true, targetSlot.gameObject);
                         targetSlot.Highlights_Effect(true);
+
                         break;
                 }
                 break;
@@ -231,20 +244,20 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
                 switch (attackType)
                 {
                     case AttackType.None:
-                        Debug.Log("에너미 공격 표기 호출 / None");
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, this, true);
                         break;
 
                     case AttackType.Oneside_Attack:
-                        Debug.Log("에너미 공격 표기 호출 / Oneside");
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, this, true);
+                        Player_UI.instance.Turn_Exchange(false);
                         Attack_LineSetting(true, targetSlot.gameObject);
                         break;
 
                     case AttackType.Exchange_Attacks:
-                        Debug.Log("에너미 공격 표기 호출 / exchange");
+                        Player_UI.instance.Turn_WinningUI(true, targetSlot, this);
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Enemy, this, true);
                         Player_UI.instance.Turn_EngageUI(Player_UI.Object.Player, targetSlot, true);
+                        Player_UI.instance.Turn_Exchange(true);
                         Attack_LineSetting(true, targetSlot.gameObject);
                         targetSlot.Highlights_Effect(true);
                         break;
@@ -266,6 +279,10 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         if (targetSlot != null)
             targetSlot.Highlights_Effect(false);
 
+        Player_UI.instance.Turn_EngageUI(Player_UI.Object.None, this, false);
+        Player_UI.instance.Turn_WinningUI(false, null, null);
+
+        /* -> 이거 동일 동작이면 나눌 필요가?
         switch (slotType)
         {
             case SlotType.Player:
@@ -276,6 +293,7 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
                 Player_UI.instance.Turn_EngageUI(Player_UI.Object.None, this, false);
                 break;
         }
+        */
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -285,18 +303,16 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
             return;
         }
 
+
+
         switch (slotType)
         {
             case SlotType.Player:
                 if(myAttack != null)
-                {
                     Player_Manager.instnace.turnManger.Exchange_Setting_Remove(this, targetSlot, myExchange);
-                    //Player_Manager.instnace.turnManger.Exchange_Setting_Remove(this, targetSlot);
-                }
                 break;
 
             case SlotType.Enemy:
-                // 여긴 동작할거 없음!
                 break;
         }
     }
