@@ -18,7 +18,7 @@
 	- 2024.08 ~ 2025.01 (약 5.5개월)
 
 ## 플레이 영상
-	- https://www.youtube.com/watch?v=cGTPgG6__3o 
+- https://www.youtube.com/watch?v=cGTPgG6__3o 
 
 ## 기술 문서
-  - https://docs.google.com/presentation/d/1tg7utJKc2xc10Im9IV-DLVTwH0WqeazJiRDoDwSvISw/edit?usp=sharing
+- https://docs.google.com/presentation/d/1tg7utJKc2xc10Im9IV-DLVTwH0WqeazJiRDoDwSvISw/edit?usp=sharing
