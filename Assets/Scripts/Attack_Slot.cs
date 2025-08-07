@@ -41,6 +41,8 @@ public class Attack_Slot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     [Header("=== Coroutine ===")]
     private Coroutine highlightCoroutine;
     private Coroutine lineCoroutine;
+
+
     private void Awake()
     {
         if(slotType == SlotType.Enemy)
