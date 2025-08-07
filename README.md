@@ -5,6 +5,8 @@
 게임 '림버스 컴퍼니' 와 '붕괴 스타레일' 에 영감을 얻은 3D 턴제 게임입니다.
 
 
+<img width="1187" height="683" alt="Image" src="https://github.com/user-attachments/assets/602b7f76-a6e6-4f38-bc62-29e15a0ec605" />
+<img width="1915" height="1081" alt="Image" src="https://github.com/user-attachments/assets/9ae20947-7be5-4ba3-8a6b-c2ec6c4e4327" />
 
 ## 장르
   - 3D 턴제 게임
